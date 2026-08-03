@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Vault — Invest</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Vault</div><div class="sidebar-tag">Investment Platform</div>
+    <nav class="nav">
+      <a href="dashboard.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a href="invest.html" class="nav-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Invest</a>
+      <a href="wallet.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><circle cx="17" cy="14" r="1" fill="currentColor"/></svg>Wallet</a>
+      <a href="referrals.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referrals</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="sidebar-user"><div class="avatar" id="sb-avatar">V</div><div><div class="user-name" id="sb-name">—</div><div class="user-phone" id="sb-phone">—</div></div></div>
+      <button class="btn-logout" id="btn-logout"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-hdr">
+      <div><h1 class="page-title">Investment Plans</h1><p class="page-sub">Select a tier and pay via M-Pesa STK Push</p></div>
+    </div>
+    <div id="page-alert" class="alert" style="margin-bottom:1.25rem"></div>
+    <div class="tiers-grid" id="tiers-grid"><div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-2)">Loading tiers…</div></div>
+  </main>
+</div>
+
+<!-- Confirm STK Modal -->
+<div class="overlay hidden" id="stk-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">Confirm Investment</span>
+      <button class="modal-close" id="stk-close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="stk-alert" class="alert"></div>
+    <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:.625rem;padding:1rem;margin-bottom:1.25rem;font-size:.85rem">
+      <div style="display:flex;justify-content:space-between;margin-bottom:.4rem"><span style="color:var(--text-2)">Plan</span><strong id="modal-tier-name">—</strong></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:.4rem"><span style="color:var(--text-2)">Amount to pay</span><strong id="modal-deposit" style="color:var(--green)">—</strong></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text-2)">Daily earnings</span><strong id="modal-daily">—</strong></div>
+    </div>
+    <p style="font-size:.8rem;color:var(--text-2);margin-bottom:1.25rem">An M-Pesa prompt will be sent to your registered phone. Complete payment to activate your investment.</p>
+    <button class="btn btn-green btn-full" id="stk-confirm">Send M-Pesa Prompt</button>
+    <div id="stk-success" style="display:none;margin-top:1rem;text-align:center">
+      <div style="font-size:2rem;margin-bottom:.5rem">📱</div>
+      <div style="font-weight:600;margin-bottom:.25rem">Check your phone!</div>
+      <div style="font-size:.8rem;color:var(--text-2)">Complete the M-Pesa prompt. Your investment will activate automatically once payment is confirmed.</div>
+      <a href="dashboard.html" class="btn btn-gray btn-full" style="margin-top:1rem">Go to Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw 0;
+
+  let tiers = [], selectedTier = null;
+
+  async function loadTiers() {
+    tiers = await api.get('/invest/tiers');
+    const grid = document.getElementById('tiers-grid');
+    if (!tiers.length) { grid.innerHTML = '<p style="text-align:center;color:var(--text-2)">No tiers available.</p>'; return; }
+
+    grid.innerHTML = tiers.map(t => {
+      const d = parseFloat(t.depositAmt), c = parseFloat(t.dailyClaim);
+      const totalReturn = (c * 30).toFixed(0);
+      return `<div class="tier-card glass" data-id="${t.id}">
+        <div class="tier-deposit">KES ${d.toLocaleString()}<span> deposit</span></div>
+        <div class="tier-earn">Earn KES ${c.toLocaleString()}/day</div>
+        <div class="tier-stats">
+          <div class="tier-stat">Referral bonus <span>KES ${parseFloat(t.referralBonus).toLocaleString()}</span></div>
+          <div class="tier-stat">Est. 30-day return <span style="color:var(--green)">KES ${parseInt(totalReturn).toLocaleString()}</span></div>
+          <div class="tier-stat">Cycle <span>24 hours</span></div>
+        </div>
+        <button class="btn btn-green btn-full" style="margin-top:1.25rem" data-id="${t.id}">Invest KES ${d.toLocaleString()}</button>
+      </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); openModal(btn.dataset.id); });
+    });
+  }
+
+  function openModal(tierId) {
+    selectedTier = tiers.find(t => t.id === tierId);
+    if (!selectedTier) return;
+    document.getElementById('modal-tier-name').textContent = selectedTier.name;
+    document.getElementById('modal-deposit').textContent   = `KES ${parseFloat(selectedTier.depositAmt).toLocaleString()}`;
+    document.getElementById('modal-daily').textContent     = `KES ${parseFloat(selectedTier.dailyClaim).toLocaleString()}/day`;
+    hideAlert(document.getElementById('stk-alert'));
+    document.getElementById('stk-success').style.display  = 'none';
+    document.getElementById('stk-confirm').style.display  = '';
+    document.getElementById('stk-modal').classList.remove('hidden');
+  }
+
+  document.getElementById('stk-close').addEventListener('click', () => document.getElementById('stk-modal').classList.add('hidden'));
+  document.getElementById('stk-modal').addEventListener('click', e => { if (e.target === document.getElementById('stk-modal')) document.getElementById('stk-modal').classList.add('hidden'); });
+
+  document.getElementById('stk-confirm').addEventListener('click', async () => {
+    if (!selectedTier) return;
+    const btn = document.getElementById('stk-confirm');
+    const al  = document.getElementById('stk-alert');
+    hideAlert(al); setLoading(btn, true);
+    try {
+      await api.post('/mpesa/stk-push', { tierId: selectedTier.id });
+      document.getElementById('stk-success').style.display = '';
+      btn.style.display = 'none';
+    } catch(err) {
+      showAlert(al, err.message || 'M-Pesa prompt failed.');
+      setLoading(btn, false, 'Send M-Pesa Prompt');
+    }
+  });
+
+  loadTiers();
+</script>
+</body>
+</html>

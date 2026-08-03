@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InvestVault — Login</title>
+  <meta name="description" content="Sign in to your InvestVault simulated investment account." />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <div class="auth-bg">
+    <div class="glass auth-card">
+      <div style="text-align:center;margin-bottom:2rem">
+        <div class="auth-logo">InvestVault</div>
+        <p class="auth-sub">Sign in to your account</p>
+      </div>
+
+      <div id="alert" class="alert"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="phone number">Phone Number</label>
+          <input id="phone number" type="number" class="input" placeholder="254700000000" autocomplete="phone number" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input id="password" type="password" class="input" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <button id="submit-btn" type="submit" class="btn btn-primary btn-full" style="margin-top:.5rem">
+          Sign In
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        Don't have an account? <a href="register.html">Create one</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    Auth.requireGuest();
+
+    const form = document.getElementById('login-form');
+    const alertEl = document.getElementById('alert');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAlert(alertEl);
+      setLoading(submitBtn, true);
+
+      const phone = document.getElementById('phone number').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const data = await api.post('/api/auth/login', { phone, password });
+        Auth.setSession(data.token, data.user);
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        showAlert(alertEl, err.message || 'Login failed. Please try again.');
+        setLoading(submitBtn, false, 'Sign In');
+      }
+    });
+  </script>
+</body>
+
+</html>

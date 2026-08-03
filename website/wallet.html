@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InvestVault — Wallet</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">InvestVault</div>
+    <div class="sidebar-tagline">Simulated Platform</div>
+    <nav class="nav">
+      <a href="dashboard.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="invest.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        Invest
+      </a>
+      <a href="wallet.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 3H8L4 7h16l-4-4z"/><circle cx="17" cy="14" r="1" fill="currentColor"/></svg>
+        Wallet
+      </a>
+      <a href="history.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10l4 4"/><circle cx="12" cy="12" r="10"/></svg>
+        Transactions
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div>
+          <div class="sidebar-user-name" id="sidebar-name">—</div>
+          <div class="sidebar-user-email" id="sidebar-email">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Wallet</h1>
+        <p class="page-sub">Manage your virtual funds</p>
+      </div>
+    </div>
+
+    <div id="page-alert" class="alert" style="margin-bottom:1.25rem"></div>
+
+    <div class="wallet-grid">
+      <!-- Balance card -->
+      <div class="wallet-balance-card">
+        <div class="wallet-balance-label">Available Balance</div>
+        <div class="wallet-balance-value" id="w-balance">$—</div>
+        <div class="wallet-actions">
+          <button class="btn btn-primary" id="btn-deposit">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            Deposit
+          </button>
+          <button class="btn btn-secondary" id="btn-withdraw">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            Withdraw
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats grid -->
+      <div class="wallet-stats">
+        <div class="wallet-stat-card">
+          <div class="wallet-stat-label">Total Deposited</div>
+          <div class="wallet-stat-value" id="w-deposited">$—</div>
+        </div>
+        <div class="wallet-stat-card">
+          <div class="wallet-stat-label">Total Withdrawn</div>
+          <div class="wallet-stat-value" id="w-withdrawn">$—</div>
+        </div>
+        <div class="wallet-stat-card">
+          <div class="wallet-stat-label">Total Earned (ROI)</div>
+          <div class="wallet-stat-value" style="color:var(--emerald)" id="w-earned">$—</div>
+        </div>
+        <div class="wallet-stat-card">
+          <div class="wallet-stat-label">Net P&amp;L</div>
+          <div class="wallet-stat-value" id="w-pnl">$—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent transactions (compact) -->
+    <div class="glass table-card" style="margin-top:1.25rem">
+      <div class="table-title">Recent Transactions</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th class="right">Amount</th>
+              <th class="right">Date</th>
+            </tr>
+          </thead>
+          <tbody id="recent-tbody">
+            <tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--text-2)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Deposit Modal -->
+<div class="modal-overlay hidden" id="deposit-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title-row">
+        <div class="modal-icon modal-icon-violet">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Deposit Funds</div>
+          <div class="modal-sub">Add virtual funds to your wallet</div>
+        </div>
+      </div>
+      <button class="modal-close" id="deposit-close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="deposit-alert" class="alert"></div>
+    <div class="form-group">
+      <label class="form-label">Amount (USD)</label>
+      <input id="deposit-amount" type="number" min="1" step="any" class="input" placeholder="0.00" style="font-size:1.1rem" />
+    </div>
+    <div class="quick-amounts">
+      <button class="quick-btn" data-val="100">+$100</button>
+      <button class="quick-btn" data-val="500">+$500</button>
+      <button class="quick-btn" data-val="1000">+$1,000</button>
+      <button class="quick-btn" data-val="5000">+$5,000</button>
+    </div>
+    <button class="btn btn-primary btn-full" id="deposit-submit" style="margin-top:1.25rem">Confirm Deposit</button>
+  </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div class="modal-overlay hidden" id="withdraw-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title-row">
+        <div class="modal-icon modal-icon-amber">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Withdraw Funds</div>
+          <div class="modal-sub">Available: <span id="withdraw-avail" style="color:var(--emerald);font-weight:600">$—</span></div>
+        </div>
+      </div>
+      <button class="modal-close" id="withdraw-close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="withdraw-alert" class="alert"></div>
+    <div class="form-group">
+      <label class="form-label">Amount (USD)</label>
+      <input id="withdraw-amount" type="number" min="1" step="any" class="input" placeholder="0.00" style="font-size:1.1rem" />
+    </div>
+    <button class="btn btn-secondary btn-sm" id="withdraw-all" style="margin-bottom:.75rem">Withdraw All</button>
+    <button class="btn btn-amber btn-full" id="withdraw-submit">Confirm Withdrawal</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw new Error('redirect');
+
+  let walletData = null;
+
+  const TX_TYPES = {
+    DEPOSIT:    { label: 'Deposit',    color: 'var(--emerald)', sign: '+', badge: 'badge-green'  },
+    WITHDRAWAL: { label: 'Withdrawal', color: '#f87171',       sign: '-', badge: 'badge-red'    },
+    ROI_PAYOUT: { label: 'ROI Payout', color: 'var(--violet-lt)', sign: '+', badge: 'badge-violet' },
+  };
+
+  async function loadWallet() {
+    const [wallet, history] = await Promise.all([
+      api.get('/api/wallet'),
+      api.get('/api/history?limit=10'),
+    ]);
+    walletData = wallet;
+
+    const earned    = parseFloat(wallet.totalEarned || 0);
+    const deposited = parseFloat(wallet.totalDeposited || 0);
+    const withdrawn = parseFloat(wallet.totalWithdrawn || 0);
+    const pnl       = earned - withdrawn;
+
+    document.getElementById('w-balance').textContent   = '$' + fmt(wallet.balance);
+    document.getElementById('w-deposited').textContent = '$' + fmt(deposited);
+    document.getElementById('w-withdrawn').textContent = '$' + fmt(withdrawn);
+    document.getElementById('w-earned').textContent    = '$' + fmt(earned);
+    document.getElementById('withdraw-avail').textContent = '$' + fmt(wallet.balance);
+
+    const pnlEl = document.getElementById('w-pnl');
+    pnlEl.textContent = (pnl >= 0 ? '+' : '') + '$' + fmt(Math.abs(pnl));
+    pnlEl.style.color = pnl >= 0 ? 'var(--emerald)' : '#f87171';
+
+    const tbody = document.getElementById('recent-tbody');
+    if (!history.data?.length) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--text-2)">No transactions yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = history.data.map(tx => {
+      const cfg = TX_TYPES[tx.type] || TX_TYPES.DEPOSIT;
+      return `
+        <tr>
+          <td><span class="badge ${cfg.badge}">${cfg.label}</span></td>
+          <td class="right" style="color:${cfg.color};font-weight:600">${cfg.sign}$${fmt(tx.amount)}</td>
+          <td class="right" style="color:var(--text-2);font-size:.8rem">${new Date(tx.createdAt).toLocaleString()}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ── Deposit Modal ──
+  const depositModal  = document.getElementById('deposit-modal');
+  const depositAmount = document.getElementById('deposit-amount');
+  const depositAlert  = document.getElementById('deposit-alert');
+  const depositSubmit = document.getElementById('deposit-submit');
+
+  document.getElementById('btn-deposit').addEventListener('click', () => {
+    depositAmount.value = ''; hideAlert(depositAlert);
+    document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+    depositModal.classList.remove('hidden');
+  });
+  document.getElementById('deposit-close').addEventListener('click', () => depositModal.classList.add('hidden'));
+  depositModal.addEventListener('click', e => { if (e.target === depositModal) depositModal.classList.add('hidden'); });
+  document.querySelectorAll('.quick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      depositAmount.value = btn.dataset.val;
+    });
+  });
+  depositSubmit.addEventListener('click', async () => {
+    const amount = parseFloat(depositAmount.value);
+    if (!amount || amount <= 0) { showAlert(depositAlert, 'Enter a valid amount.'); return; }
+    hideAlert(depositAlert); setLoading(depositSubmit, true);
+    try {
+      await api.post('/api/wallet/deposit', { amount });
+      depositModal.classList.add('hidden');
+      showAlert(document.getElementById('page-alert'), `✅ Deposited $${fmt(amount)} successfully!`, 'success');
+      await loadWallet();
+    } catch (err) {
+      showAlert(depositAlert, err.message);
+      setLoading(depositSubmit, false, 'Confirm Deposit');
+    }
+  });
+
+  // ── Withdraw Modal ──
+  const withdrawModal  = document.getElementById('withdraw-modal');
+  const withdrawAmount = document.getElementById('withdraw-amount');
+  const withdrawAlert  = document.getElementById('withdraw-alert');
+  const withdrawSubmit = document.getElementById('withdraw-submit');
+
+  document.getElementById('btn-withdraw').addEventListener('click', () => {
+    withdrawAmount.value = ''; hideAlert(withdrawAlert);
+    withdrawModal.classList.remove('hidden');
+  });
+  document.getElementById('withdraw-close').addEventListener('click', () => withdrawModal.classList.add('hidden'));
+  withdrawModal.addEventListener('click', e => { if (e.target === withdrawModal) withdrawModal.classList.add('hidden'); });
+  document.getElementById('withdraw-all').addEventListener('click', () => {
+    if (walletData) withdrawAmount.value = parseFloat(walletData.balance).toFixed(2);
+  });
+  withdrawSubmit.addEventListener('click', async () => {
+    const amount  = parseFloat(withdrawAmount.value);
+    const balance = walletData ? parseFloat(walletData.balance) : 0;
+    if (!amount || amount <= 0) { showAlert(withdrawAlert, 'Enter a valid amount.'); return; }
+    if (amount > balance) { showAlert(withdrawAlert, 'Insufficient balance.'); return; }
+    hideAlert(withdrawAlert); setLoading(withdrawSubmit, true);
+    try {
+      await api.post('/api/wallet/withdraw', { amount });
+      withdrawModal.classList.add('hidden');
+      showAlert(document.getElementById('page-alert'), `✅ Withdrew $${fmt(amount)} successfully!`, 'success');
+      await loadWallet();
+    } catch (err) {
+      showAlert(withdrawAlert, err.message);
+      setLoading(withdrawSubmit, false, 'Confirm Withdrawal');
+    }
+  });
+
+  loadWallet();
+</script>
+</body>
+</html>

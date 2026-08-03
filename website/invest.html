@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InvestVault — Investment Plans</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">InvestVault</div>
+    <div class="sidebar-tagline">Simulated Platform</div>
+    <nav class="nav">
+      <a href="dashboard.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="invest.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        Invest
+      </a>
+      <a href="wallet.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 3H8L4 7h16l-4-4z"/><circle cx="17" cy="14" r="1" fill="currentColor"/></svg>
+        Wallet
+      </a>
+      <a href="history.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10l4 4"/><circle cx="12" cy="12" r="10"/></svg>
+        Transactions
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div>
+          <div class="sidebar-user-name" id="sidebar-name">—</div>
+          <div class="sidebar-user-email" id="sidebar-email">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Investment Plans</h1>
+        <p class="page-sub">Choose a plan and commit funds to earn daily ROI</p>
+      </div>
+    </div>
+
+    <div id="page-alert" class="alert" style="margin-bottom:1.25rem"></div>
+
+    <div class="plans-grid" id="plans-grid">
+      <!-- populated by JS -->
+      <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-2);font-size:.875rem">
+        Loading plans…
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw new Error('redirect');
+
+  const PLAN_CONFIG = {
+    Starter: { iconClass: 'plan-icon-cyan',   icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>` },
+    Growth:  { iconClass: 'plan-icon-violet', icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>` },
+    Elite:   { iconClass: 'plan-icon-amber',  icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>` },
+  };
+
+  let plans = [];
+  let selectedPlanId = null;
+
+  async function loadPlans() {
+    plans = await api.get('/api/invest/plans');
+    renderPlans();
+  }
+
+  function renderPlans() {
+    const grid = document.getElementById('plans-grid');
+    if (!plans.length) { grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-2)">No plans available.</p>'; return; }
+
+    grid.innerHTML = plans.map(plan => {
+      const cfg  = PLAN_CONFIG[plan.name] || PLAN_CONFIG.Growth;
+      const rate = (parseFloat(plan.dailyRatePct) * 100).toFixed(1);
+      const totalReturn = (parseFloat(plan.dailyRatePct) * 100 * plan.durationDays).toFixed(0);
+
+      return `
+      <div class="plan-card ${selectedPlanId === plan.id ? 'selected' : ''}" data-plan="${plan.id}">
+        <div class="plan-icon ${cfg.iconClass}">${cfg.icon}</div>
+        <div class="plan-name">${plan.name}</div>
+        <div class="plan-desc">${plan.description || ''}</div>
+        <div class="plan-stats">
+          <div class="plan-stat">
+            <span class="plan-stat-label">Daily Rate</span>
+            <span class="plan-stat-rate">${rate}%</span>
+          </div>
+          <div class="plan-stat">
+            <span class="plan-stat-label">Duration</span>
+            <span class="plan-stat-value">${plan.durationDays} days</span>
+          </div>
+          <div class="plan-stat">
+            <span class="plan-stat-label">Total Return</span>
+            <span class="plan-stat-value" style="color:var(--amber)">${totalReturn}%</span>
+          </div>
+          <div class="plan-stat">
+            <span class="plan-stat-label">Min / Max</span>
+            <span class="plan-stat-value">$${fmt(plan.minAmount, 0)} – $${fmt(plan.maxAmount, 0)}</span>
+          </div>
+        </div>
+        <div class="plan-commit">
+          <input type="number" class="input commit-amount" placeholder="Enter amount (USD)"
+            min="${plan.minAmount}" max="${plan.maxAmount}" step="any" style="margin-bottom:.75rem" />
+          <button class="btn btn-primary btn-full commit-btn" data-plan="${plan.id}">Commit Funds</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Click to expand/collapse
+    grid.querySelectorAll('.plan-card').forEach(card => {
+      card.addEventListener('click', e => {
+        if (e.target.closest('.plan-commit')) return; // don't collapse when interacting inside
+        const id = card.dataset.plan;
+        selectedPlanId = selectedPlanId === id ? null : id;
+        renderPlans();
+      });
+    });
+
+    // Commit buttons
+    grid.querySelectorAll('.commit-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const planId = btn.dataset.plan;
+        const input  = btn.closest('.plan-commit').querySelector('.commit-amount');
+        const amount = parseFloat(input.value);
+        const alert  = document.getElementById('page-alert');
+
+        if (!amount || amount <= 0) { showAlert(alert, 'Enter a valid amount.'); return; }
+        hideAlert(alert);
+        setLoading(btn, true);
+        try {
+          await api.post('/api/invest/commit', { planId, amount });
+          showAlert(alert, `✅ Successfully committed $${fmt(amount)} to the ${plans.find(p=>p.id===planId)?.name} plan!`, 'success');
+          selectedPlanId = null;
+          renderPlans();
+        } catch (err) {
+          showAlert(alert, err.message || 'Commit failed.');
+          setLoading(btn, false, 'Commit Funds');
+        }
+      });
+    });
+  }
+
+  loadPlans();
+</script>
+</body>
+</html>

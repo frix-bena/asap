@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Vault — Wallet</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Vault</div><div class="sidebar-tag">Investment Platform</div>
+    <nav class="nav">
+      <a href="dashboard.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a href="invest.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Invest</a>
+      <a href="wallet.html" class="nav-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><circle cx="17" cy="14" r="1" fill="currentColor"/></svg>Wallet</a>
+      <a href="referrals.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referrals</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="sidebar-user"><div class="avatar" id="sb-avatar">V</div><div><div class="user-name" id="sb-name">—</div><div class="user-phone" id="sb-phone">—</div></div></div>
+      <button class="btn-logout" id="btn-logout"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-hdr"><div><h1 class="page-title">Wallet</h1><p class="page-sub">Manage your earnings</p></div></div>
+    <div id="page-alert" class="alert" style="margin-bottom:1.25rem"></div>
+
+    <!-- Balance Card -->
+    <div class="balance-card glass">
+      <div class="balance-lbl">Withdrawable Balance</div>
+      <div class="balance-val" id="w-balance">KES —</div>
+      <div class="balance-actions">
+        <button class="btn btn-green" id="btn-withdraw">Withdraw to M-Pesa</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+      <div class="kpi glass"><div class="kpi-label">Total Earned</div><div class="kpi-val" id="w-earned" style="font-size:1.35rem">—</div></div>
+      <div class="kpi glass"><div class="kpi-label">Total Withdrawn</div><div class="kpi-val" id="w-withdrawn" style="font-size:1.35rem">—</div></div>
+      <div class="kpi glass"><div class="kpi-label">Min Withdrawal</div><div class="kpi-val" style="font-size:1.35rem">KES 50</div></div>
+    </div>
+
+    <!-- Fee Schedule -->
+    <div class="card glass" style="margin-bottom:1.5rem">
+      <div class="card-title">Withdrawal Fee Schedule</div>
+      <table><thead><tr><th>Amount Range</th><th class="r">Fee</th><th class="r">Example</th></tr></thead>
+      <tbody>
+        <tr><td>KES 50 – 99</td><td class="r">Flat KES 10</td><td class="r" style="color:var(--text-2)">50 → KES 40</td></tr>
+        <tr><td>KES 100 – 499</td><td class="r">15%</td><td class="r" style="color:var(--text-2)">200 → KES 170</td></tr>
+        <tr><td>KES 500 – 999</td><td class="r">12%</td><td class="r" style="color:var(--text-2)">500 → KES 440</td></tr>
+        <tr><td>KES 1,000 – 4,999</td><td class="r">10%</td><td class="r" style="color:var(--text-2)">1000 → KES 900</td></tr>
+        <tr><td>KES 5,000+</td><td class="r">7%</td><td class="r" style="color:var(--text-2)">5000 → KES 4,650</td></tr>
+      </tbody></table>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="card glass">
+      <div class="card-title">Transaction History</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Type</th><th class="r">Gross</th><th class="r">Fee</th><th class="r">Net</th><th class="r">Status</th><th class="r">Date</th></tr></thead>
+          <tbody id="tx-tbody"><tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-2)">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+        <span id="pg-info" style="font-size:.78rem;color:var(--text-2)">—</span>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-gray btn-sm" id="btn-prev" disabled>← Prev</button>
+          <button class="btn btn-gray btn-sm" id="btn-next" disabled>Next →</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Withdraw Modal -->
+<div class="overlay hidden" id="wd-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">Withdraw to M-Pesa</span>
+      <button class="modal-close" id="wd-close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="wd-alert" class="alert"></div>
+    <div class="form-group">
+      <label class="label">Amount (KES)</label>
+      <input id="wd-amount" type="number" min="50" class="input" placeholder="Min KES 50" style="font-size:1.1rem"/>
+    </div>
+    <!-- Live fee preview -->
+    <div class="fee-preview" id="fee-preview">
+      <div class="fee-row"><span>Gross amount</span><span id="fp-gross">—</span></div>
+      <div class="fee-row"><span>Transaction fee</span><span id="fp-fee" style="color:var(--amber)">—</span></div>
+      <div class="fee-row total"><span>You receive</span><span id="fp-net" style="color:var(--green)">—</span></div>
+    </div>
+    <button class="btn btn-green btn-full" id="wd-submit" style="margin-top:.75rem">Withdraw</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw 0;
+
+  let walletData = null, page = 1, totalPages = 1;
+  const FEES = [
+    { min:50,   max:99,   flat:10,   pct:null },
+    { min:100,  max:499,  flat:null, pct:0.15 },
+    { min:500,  max:999,  flat:null, pct:0.12 },
+    { min:1000, max:4999, flat:null, pct:0.10 },
+    { min:5000, max:Infinity, flat:null, pct:0.07 },
+  ];
+  function calcFee(amt) {
+    const b = FEES.find(b => amt >= b.min && amt <= b.max);
+    if (!b) return null;
+    const fee = b.flat !== null ? b.flat : Math.round(amt * b.pct * 100) / 100;
+    return { fee, net: Math.round((amt - fee)*100)/100 };
+  }
+
+  const TX_CFG = {
+    DEPOSIT:'badge-green', CLAIM:'badge-green', SIGNUP_BONUS:'badge-violet',
+    REFERRAL_BONUS:'badge-violet', WITHDRAWAL:'badge-amber',
+  };
+
+  async function load() {
+    const [wallet, txs] = await Promise.all([api.get('/wallet'), api.get(`/wallet/transactions?page=${page}&limit=15`)]);
+    walletData = wallet;
+    document.getElementById('w-balance').textContent   = fmt(wallet.withdrawable);
+    document.getElementById('w-earned').textContent    = fmt(wallet.totalEarned);
+    document.getElementById('w-withdrawn').textContent = fmt(wallet.totalWithdrawn);
+
+    totalPages = txs.pagination.pages || 1;
+    const { total, limit: lim } = txs.pagination;
+    const from = (page-1)*lim+1, to = Math.min(page*lim, total);
+    document.getElementById('pg-info').textContent = total ? `Showing ${from}–${to} of ${total}` : 'No transactions';
+    document.getElementById('btn-prev').disabled = page <= 1;
+    document.getElementById('btn-next').disabled = page >= totalPages;
+
+    const tbody = document.getElementById('tx-tbody');
+    if (!txs.data?.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-2)">No transactions.</td></tr>'; return; }
+    tbody.innerHTML = txs.data.map(tx => {
+      const badge = TX_CFG[tx.type] || 'badge-green';
+      const isOut = tx.type === 'WITHDRAWAL';
+      return `<tr>
+        <td><span class="badge ${badge}">${tx.type.replace('_',' ')}</span></td>
+        <td class="r">${isOut ? '-' : '+'}KES ${fmtNum(tx.amount)}</td>
+        <td class="r" style="color:var(--amber)">${parseFloat(tx.fee)>0?'KES '+fmtNum(tx.fee):'—'}</td>
+        <td class="r" style="font-weight:600;color:${isOut?'var(--amber)':'var(--green)'}">KES ${fmtNum(tx.netAmount)}</td>
+        <td class="r"><span class="badge ${tx.status==='COMPLETED'?'badge-green':tx.status==='FAILED'?'badge-red':'badge-amber'}">${tx.status}</span></td>
+        <td class="r" style="font-size:.73rem;color:var(--text-2)">${new Date(tx.createdAt).toLocaleString()}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('btn-prev').addEventListener('click', () => { page--; load(); });
+  document.getElementById('btn-next').addEventListener('click', () => { page++; load(); });
+
+  // ── Withdraw Modal ──
+  const modal = document.getElementById('wd-modal');
+  const wdAmt = document.getElementById('wd-amount');
+  const wdAl  = document.getElementById('wd-alert');
+
+  document.getElementById('btn-withdraw').addEventListener('click', () => {
+    wdAmt.value = ''; hideAlert(wdAl);
+    document.getElementById('fee-preview').classList.remove('show');
+    modal.classList.remove('hidden');
+  });
+  document.getElementById('wd-close').addEventListener('click', () => modal.classList.add('hidden'));
+  modal.addEventListener('click', e => { if(e.target===modal) modal.classList.add('hidden'); });
+
+  wdAmt.addEventListener('input', () => {
+    const amt = parseFloat(wdAmt.value);
+    const fp  = document.getElementById('fee-preview');
+    if (!amt || amt < 50) { fp.classList.remove('show'); return; }
+    const c = calcFee(amt);
+    if (!c) { fp.classList.remove('show'); return; }
+    fp.classList.add('show');
+    document.getElementById('fp-gross').textContent = `KES ${fmtNum(amt)}`;
+    document.getElementById('fp-fee').textContent   = `KES ${fmtNum(c.fee)}`;
+    document.getElementById('fp-net').textContent   = `KES ${fmtNum(c.net)}`;
+  });
+
+  document.getElementById('wd-submit').addEventListener('click', async () => {
+    const amount = parseFloat(wdAmt.value);
+    const btn    = document.getElementById('wd-submit');
+    if (!amount || amount < 50) { showAlert(wdAl, 'Minimum withdrawal is KES 50.'); return; }
+    const avail = walletData ? parseFloat(walletData.withdrawable) : 0;
+    if (amount > avail) { showAlert(wdAl, `Insufficient balance. Available: KES ${fmtNum(avail)}`); return; }
+    hideAlert(wdAl); setLoading(btn, true);
+    try {
+      const r = await api.post('/wallet/withdraw', { amount });
+      modal.classList.add('hidden');
+      showAlert(document.getElementById('page-alert'), `✅ ${r.message}`, 'success');
+      await load();
+    } catch(err) {
+      showAlert(wdAl, err.message);
+      setLoading(btn, false, 'Withdraw');
+    }
+  });
+
+  load();
+</script>
+</body>
+</html>

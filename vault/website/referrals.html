@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Vault — Referrals</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Vault</div><div class="sidebar-tag">Investment Platform</div>
+    <nav class="nav">
+      <a href="dashboard.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a href="invest.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Invest</a>
+      <a href="wallet.html" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><circle cx="17" cy="14" r="1" fill="currentColor"/></svg>Wallet</a>
+      <a href="referrals.html" class="nav-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referrals</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="sidebar-user"><div class="avatar" id="sb-avatar">V</div><div><div class="user-name" id="sb-name">—</div><div class="user-phone" id="sb-phone">—</div></div></div>
+      <button class="btn-logout" id="btn-logout"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-hdr"><div><h1 class="page-title">Referral Program</h1><p class="page-sub">Earn bonuses based on YOUR active tier</p></div></div>
+
+    <!-- Referral Box -->
+    <div class="referral-box glass">
+      <div style="font-size:.82rem;color:var(--text-2)">Your referral code</div>
+      <div class="referral-code" id="ref-code">—</div>
+      <div class="referral-link" id="ref-link">—</div>
+      <div style="display:flex;gap:.75rem;margin-top:1rem">
+        <button class="btn btn-green btn-sm" id="copy-code">Copy Code</button>
+        <button class="btn btn-gray btn-sm" id="copy-link">Copy Link</button>
+      </div>
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(34,197,94,.2);font-size:.8rem;color:var(--text-2)">
+        💡 Your referral bonus is based on <strong style="color:var(--text-1)">your own investment tier</strong>, not the tier of the person you invite.
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+      <div class="kpi glass"><div class="kpi-label">Total Referrals</div><div class="kpi-val" id="ref-count" style="font-size:1.85rem">—</div></div>
+      <div class="kpi glass"><div class="kpi-glow kpi-glow-g"></div><div class="kpi-label">Total Earned</div><div class="kpi-val" id="ref-earned" style="font-size:1.35rem">—</div></div>
+      <div class="kpi glass"><div class="kpi-label">Tier Bonus Rates</div>
+        <div style="font-size:.72rem;color:var(--text-2);margin-top:.5rem;line-height:1.7">
+          Tier 1 (250) → KES 50<br>Tier 2 (500) → KES 100<br>Tier 3 (750) → KES 150<br>Tier 4 (2500) → KES 500<br>Tier 5 (5000) → KES 1000
+        </div>
+      </div>
+    </div>
+
+    <!-- Referrals table -->
+    <div class="card glass">
+      <div class="card-title">People You've Referred</div>
+      <table>
+        <thead><tr><th>Name</th><th>Phone</th><th class="r">Bonus Paid</th><th class="r">Status</th><th class="r">Joined</th></tr></thead>
+        <tbody id="ref-tbody"><tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-2)">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw 0;
+
+  async function load() {
+    const user = Auth.getUser();
+    const code = user?.referralCode || '—';
+    const link = `${location.origin}/register.html?ref=${code}`;
+
+    document.getElementById('ref-code').textContent = code;
+    document.getElementById('ref-link').textContent = link;
+
+    document.getElementById('copy-code').addEventListener('click', () => {
+      navigator.clipboard.writeText(code);
+      document.getElementById('copy-code').textContent = 'Copied!';
+      setTimeout(() => { document.getElementById('copy-code').textContent = 'Copy Code'; }, 2000);
+    });
+    document.getElementById('copy-link').addEventListener('click', () => {
+      navigator.clipboard.writeText(link);
+      document.getElementById('copy-link').textContent = 'Copied!';
+      setTimeout(() => { document.getElementById('copy-link').textContent = 'Copy Link'; }, 2000);
+    });
+
+    const data = await api.get('/wallet/referrals');
+    document.getElementById('ref-count').textContent  = data.count;
+    document.getElementById('ref-earned').textContent = fmt(data.totalEarned);
+
+    const tbody = document.getElementById('ref-tbody');
+    if (!data.referrals.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-2)">No referrals yet. Share your link!</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.referrals.map(r => `
+      <tr>
+        <td>${r.referee.fullName}</td>
+        <td style="color:var(--text-2)">${r.referee.phone.replace(/(\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4')}</td>
+        <td class="r" style="color:var(--green);font-weight:600">${r.paid ? fmt(r.bonusAmount) : '—'}</td>
+        <td class="r"><span class="badge ${r.paid?'badge-green':'badge-amber'}">${r.paid?'Paid':'Pending'}</span></td>
+        <td class="r" style="font-size:.75rem;color:var(--text-2)">${new Date(r.createdAt).toLocaleDateString()}</td>
+      </tr>`).join('');
+  }
+
+  load();
+</script>
+</body>
+</html>

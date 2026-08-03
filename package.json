@@ -1,0 +1,17 @@
+{
+  "name": "mwosho",
+  "version": "1.0.0",
+  "description": "Simulated Investment Platform — monorepo root",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names \"CLIENT,SERVER\" --prefix-colors \"cyan,green\" \"cd client && npm run dev\" \"cd server && npm run dev\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "concurrently --names \"CLIENT,SERVER\" --prefix-colors \"cyan,green\" \"cd client && npm run start\" \"cd server && npm run start\"",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

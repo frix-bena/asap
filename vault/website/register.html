@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Vault — Create Account</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div class="auth-bg">
+  <div class="auth-card">
+    <div class="glass" style="padding:2.25rem">
+      <div style="text-align:center;margin-bottom:1.75rem">
+        <div class="logo">Vault</div>
+        <p class="auth-sub" style="margin-bottom:0">Get KES 50 free on sign up 🎁</p>
+      </div>
+      <div id="alert" class="alert"></div>
+      <form id="form">
+        <div class="form-group">
+          <label class="label">Full Name</label>
+          <input id="fullName" type="text" class="input" placeholder="Jane Doe" required autocomplete="name"/>
+        </div>
+        <div class="form-group">
+          <label class="label">M-Pesa Phone Number</label>
+          <input id="phone" type="tel" class="input" placeholder="0712 345 678" required autocomplete="tel"/>
+          <div class="input-hint">This will be used for deposits &amp; withdrawals</div>
+        </div>
+        <div class="form-group">
+          <label class="label">Password <span style="color:var(--text-3);text-transform:none;font-size:.7rem">(min 6 chars)</span></label>
+          <input id="password" type="password" class="input" placeholder="••••••" required minlength="6" autocomplete="new-password"/>
+        </div>
+        <div class="form-group">
+          <label class="label">Referral Code <span style="color:var(--text-3);text-transform:none;font-size:.7rem">(optional)</span></label>
+          <input id="referralCode" type="text" class="input" placeholder="Enter code if you have one"/>
+        </div>
+        <button id="submit" type="submit" class="btn btn-green btn-full" style="margin-top:.5rem">Create Account — Free KES 50</button>
+      </form>
+      <p class="auth-footer">Have an account? <a href="login.html">Sign in</a></p>
+    </div>
+  </div>
+</div>
+<script src="js/app.js"></script>
+<script>
+  Auth.requireGuest();
+  const alertEl = document.getElementById('alert');
+  const submit  = document.getElementById('submit');
+
+  // Pre-fill referral code from URL ?ref=CODE
+  const ref = new URLSearchParams(location.search).get('ref');
+  if (ref) document.getElementById('referralCode').value = ref;
+
+  document.getElementById('form').addEventListener('submit', async e => {
+    e.preventDefault(); hideAlert(alertEl); setLoading(submit, true);
+    try {
+      const d = await api.post('/auth/register', {
+        fullName:     document.getElementById('fullName').value.trim(),
+        phone:        document.getElementById('phone').value.trim(),
+        password:     document.getElementById('password').value,
+        referralCode: document.getElementById('referralCode').value.trim() || undefined,
+      });
+      Auth.setSession(d.token, d.user);
+      location.href = 'dashboard.html';
+    } catch(err) {
+      const msgs = err.data?.errors?.map(e => e.msg).join(', ');
+      showAlert(alertEl, msgs || err.message || 'Registration failed.');
+      setLoading(submit, false, 'Create Account — Free KES 50');
+    }
+  });
+</script>
+</body>
+</html>

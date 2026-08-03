@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InvestVault — Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">InvestVault</div>
+    <div class="sidebar-tagline">Simulated Platform</div>
+    <nav class="nav">
+      <a href="dashboard.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="invest.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        Invest
+      </a>
+      <a href="wallet.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 3H8L4 7h16l-4-4z"/><circle cx="17" cy="14" r="1" fill="currentColor"/></svg>
+        Wallet
+      </a>
+      <a href="history.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10l4 4"/><circle cx="12" cy="12" r="10"/></svg>
+        Transactions
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+        <div>
+          <div class="sidebar-user-name" id="sidebar-name">—</div>
+          <div class="sidebar-user-email" id="sidebar-email">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Overview</h1>
+        <p class="page-sub">Your portfolio at a glance</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" id="btn-deposit">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          Deposit
+        </button>
+        <button class="btn btn-secondary" id="btn-withdraw">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          Withdraw
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-glow kpi-glow-violet"></div>
+        <div class="kpi-header">
+          <span class="kpi-label">Total Balance</span>
+          <div class="kpi-icon kpi-icon-violet">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><circle cx="17" cy="14" r="1" fill="currentColor"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpi-balance">$—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-glow kpi-glow-cyan"></div>
+        <div class="kpi-header">
+          <span class="kpi-label">Active Investments</span>
+          <div class="kpi-icon kpi-icon-cyan">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpi-investments">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-glow kpi-glow-amber"></div>
+        <div class="kpi-header">
+          <span class="kpi-label">Total Earned</span>
+          <div class="kpi-icon kpi-icon-amber">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpi-earned">$—</div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="glass chart-card">
+      <div class="chart-title">Daily ROI Earnings</div>
+      <div class="chart-sub">Last 30 payout cycles</div>
+      <div class="chart-wrap">
+        <div id="chart-empty" class="chart-empty" style="display:none">
+          No ROI payouts yet — invest to start earning daily returns.
+        </div>
+        <canvas id="roi-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Active Investments Table -->
+    <div class="glass table-card" id="investments-section" style="display:none">
+      <div class="table-title">Active Investments</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Plan</th>
+              <th class="right">Principal</th>
+              <th class="right">Daily Rate</th>
+              <th class="right">Earned</th>
+              <th class="right">Matures</th>
+            </tr>
+          </thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Deposit Modal -->
+<div class="modal-overlay hidden" id="deposit-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title-row">
+        <div class="modal-icon modal-icon-violet">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Deposit Funds</div>
+          <div class="modal-sub">Add virtual funds to your wallet</div>
+        </div>
+      </div>
+      <button class="modal-close" id="deposit-close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="deposit-alert" class="alert"></div>
+    <div class="form-group">
+      <label class="form-label">Amount (USD)</label>
+      <input id="deposit-amount" type="number" min="1" step="any" class="input" placeholder="0.00" style="font-size:1.15rem" />
+    </div>
+    <div class="quick-amounts" id="quick-amounts">
+      <button class="quick-btn" data-val="100">+$100</button>
+      <button class="quick-btn" data-val="500">+$500</button>
+      <button class="quick-btn" data-val="1000">+$1,000</button>
+      <button class="quick-btn" data-val="5000">+$5,000</button>
+    </div>
+    <button class="btn btn-primary btn-full" id="deposit-submit" style="margin-top:1.25rem">Confirm Deposit</button>
+  </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div class="modal-overlay hidden" id="withdraw-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title-row">
+        <div class="modal-icon modal-icon-amber">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Withdraw Funds</div>
+          <div class="modal-sub">Available: <span id="withdraw-avail" style="color:var(--emerald);font-weight:600">$—</span></div>
+        </div>
+      </div>
+      <button class="modal-close" id="withdraw-close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="withdraw-alert" class="alert"></div>
+    <div class="form-group">
+      <label class="form-label">Amount (USD)</label>
+      <input id="withdraw-amount" type="number" min="1" step="any" class="input" placeholder="0.00" style="font-size:1.15rem" />
+      <div id="withdraw-error" style="color:var(--red);font-size:.78rem;margin-top:.4rem;display:none">Exceeds available balance.</div>
+    </div>
+    <button class="btn btn-secondary btn-sm" id="withdraw-all" style="margin-bottom:.75rem">Withdraw All</button>
+    <button class="btn btn-amber btn-full" id="withdraw-submit">Confirm Withdrawal</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw new Error('redirect');
+
+  let walletData = null;
+  let roiChart   = null;
+
+  async function loadDashboard() {
+    const [wallet, investments, history] = await Promise.all([
+      api.get('/api/wallet'),
+      api.get('/api/invest/active'),
+      api.get('/api/history?type=ROI_PAYOUT&limit=30'),
+    ]);
+
+    walletData = wallet;
+
+    // KPIs
+    document.getElementById('kpi-balance').textContent     = '$' + fmt(wallet.balance);
+    document.getElementById('kpi-investments').textContent = investments.length;
+    document.getElementById('kpi-earned').textContent      = '$' + fmt(wallet.totalEarned);
+
+    // Withdraw available
+    document.getElementById('withdraw-avail').textContent = '$' + fmt(wallet.balance);
+
+    // Chart
+    const roiData = (history.data || []).slice().reverse();
+    if (roiData.length === 0) {
+      document.getElementById('chart-empty').style.display = 'flex';
+      document.getElementById('roi-chart').style.display   = 'none';
+    } else {
+      document.getElementById('chart-empty').style.display = 'none';
+      document.getElementById('roi-chart').style.display   = 'block';
+      renderChart(roiData);
+    }
+
+    // Active investments table
+    if (investments.length > 0) {
+      document.getElementById('investments-section').style.display = 'block';
+      const tbody = document.getElementById('inv-tbody');
+      tbody.innerHTML = investments.map(inv => `
+        <tr>
+          <td><span class="badge badge-violet">${inv.plan.name}</span></td>
+          <td class="right">$${fmt(inv.principal)}</td>
+          <td class="right" style="color:var(--emerald)">${(parseFloat(inv.plan.dailyRatePct)*100).toFixed(1)}%</td>
+          <td class="right" style="color:var(--amber)">$${fmt(inv.earnedToDate)}</td>
+          <td class="right" style="color:var(--text-2)">${new Date(inv.maturityDate).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  function renderChart(data) {
+    const labels = data.map((_, i) => `Day ${i+1}`);
+    const values = data.map(tx => parseFloat(tx.amount));
+    const ctx    = document.getElementById('roi-chart').getContext('2d');
+
+    if (roiChart) roiChart.destroy();
+
+    const grad = ctx.createLinearGradient(0, 0, 0, 220);
+    grad.addColorStop(0,   'rgba(124,58,237,0.35)');
+    grad.addColorStop(1,   'rgba(124,58,237,0)');
+
+    roiChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'ROI Earned',
+          data: values,
+          borderColor: '#7c3aed',
+          borderWidth: 2,
+          pointBackgroundColor: '#7c3aed',
+          pointRadius: 3,
+          fill: true,
+          backgroundColor: grad,
+          tension: 0.4,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            titleColor: '#94a3b8',
+            bodyColor: '#a78bfa',
+            callbacks: { label: ctx => `$${ctx.parsed.y.toFixed(4)}` },
+          },
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 11 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 11 }, callback: v => `$${v}` } },
+        },
+      },
+    });
+  }
+
+  // ── Deposit Modal ─────────────────────────
+  const depositModal  = document.getElementById('deposit-modal');
+  const depositAmount = document.getElementById('deposit-amount');
+  const depositAlert  = document.getElementById('deposit-alert');
+  const depositSubmit = document.getElementById('deposit-submit');
+
+  document.getElementById('btn-deposit').addEventListener('click', () => {
+    depositAmount.value = ''; hideAlert(depositAlert);
+    document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+    depositModal.classList.remove('hidden');
+  });
+  document.getElementById('deposit-close').addEventListener('click', () => depositModal.classList.add('hidden'));
+  depositModal.addEventListener('click', e => { if (e.target === depositModal) depositModal.classList.add('hidden'); });
+
+  document.getElementById('quick-amounts').addEventListener('click', e => {
+    if (!e.target.matches('.quick-btn')) return;
+    document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    depositAmount.value = e.target.dataset.val;
+  });
+
+  depositSubmit.addEventListener('click', async () => {
+    const amount = parseFloat(depositAmount.value);
+    if (!amount || amount <= 0) { showAlert(depositAlert, 'Enter a valid amount.'); return; }
+    hideAlert(depositAlert);
+    setLoading(depositSubmit, true);
+    try {
+      await api.post('/api/wallet/deposit', { amount });
+      depositModal.classList.add('hidden');
+      await loadDashboard();
+    } catch (err) {
+      showAlert(depositAlert, err.message);
+      setLoading(depositSubmit, false, 'Confirm Deposit');
+    }
+  });
+
+  // ── Withdraw Modal ────────────────────────
+  const withdrawModal  = document.getElementById('withdraw-modal');
+  const withdrawAmount = document.getElementById('withdraw-amount');
+  const withdrawAlert  = document.getElementById('withdraw-alert');
+  const withdrawSubmit = document.getElementById('withdraw-submit');
+  const withdrawErr    = document.getElementById('withdraw-error');
+
+  document.getElementById('btn-withdraw').addEventListener('click', () => {
+    withdrawAmount.value = ''; hideAlert(withdrawAlert); withdrawErr.style.display = 'none';
+    withdrawModal.classList.remove('hidden');
+  });
+  document.getElementById('withdraw-close').addEventListener('click', () => withdrawModal.classList.add('hidden'));
+  withdrawModal.addEventListener('click', e => { if (e.target === withdrawModal) withdrawModal.classList.add('hidden'); });
+
+  document.getElementById('withdraw-all').addEventListener('click', () => {
+    if (walletData) withdrawAmount.value = parseFloat(walletData.balance).toFixed(2);
+  });
+
+  withdrawAmount.addEventListener('input', () => {
+    const val = parseFloat(withdrawAmount.value);
+    const bal = walletData ? parseFloat(walletData.balance) : 0;
+    withdrawErr.style.display = (val > bal) ? 'block' : 'none';
+    withdrawAmount.classList.toggle('error', val > bal);
+  });
+
+  withdrawSubmit.addEventListener('click', async () => {
+    const amount  = parseFloat(withdrawAmount.value);
+    const balance = walletData ? parseFloat(walletData.balance) : 0;
+    if (!amount || amount <= 0) { showAlert(withdrawAlert, 'Enter a valid amount.'); return; }
+    if (amount > balance) { showAlert(withdrawAlert, 'Insufficient balance.'); return; }
+    hideAlert(withdrawAlert);
+    setLoading(withdrawSubmit, true);
+    try {
+      await api.post('/api/wallet/withdraw', { amount });
+      withdrawModal.classList.add('hidden');
+      await loadDashboard();
+    } catch (err) {
+      showAlert(withdrawAlert, err.message);
+      setLoading(withdrawSubmit, false, 'Confirm Withdrawal');
+    }
+  });
+
+  loadDashboard();
+</script>
+</body>
+</html>

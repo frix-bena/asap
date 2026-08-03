@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  fullName     String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  wallet       Wallet?
+  investments  Investment[]
+  transactions Transaction[]
+}
+
+model Wallet {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  balance        Decimal  @default(0) @db.Decimal(18, 8)
+  totalDeposited Decimal  @default(0) @db.Decimal(18, 8)
+  totalWithdrawn Decimal  @default(0) @db.Decimal(18, 8)
+  totalEarned    Decimal  @default(0) @db.Decimal(18, 8)
+  updatedAt      DateTime @updatedAt
+}
+
+model InvestmentPlan {
+  id           String       @id @default(cuid())
+  name         String       @unique
+  dailyRatePct Decimal      @db.Decimal(5, 4)
+  minAmount    Decimal      @db.Decimal(18, 8)
+  maxAmount    Decimal      @db.Decimal(18, 8)
+  durationDays Int
+  description  String?
+  investments  Investment[]
+}
+
+model Investment {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id])
+  planId       String
+  plan         InvestmentPlan   @relation(fields: [planId], references: [id])
+  principal    Decimal          @db.Decimal(18, 8)
+  earnedToDate Decimal          @default(0) @db.Decimal(18, 8)
+  status       InvestmentStatus @default(ACTIVE)
+  startDate    DateTime         @default(now())
+  maturityDate DateTime
+  lastRoiDate  DateTime?
+  createdAt    DateTime         @default(now())
+  roiPayouts   Transaction[]    @relation("InvestmentRoi")
+}
+
+model Transaction {
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id])
+  type         TransactionType
+  amount       Decimal         @db.Decimal(18, 8)
+  status       TxStatus        @default(PENDING)
+  reference    String          @unique @default(cuid())
+  investmentId String?
+  investment   Investment?     @relation("InvestmentRoi", fields: [investmentId], references: [id])
+  metadata     Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  MATURED
+  CANCELLED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  ROI_PAYOUT
+}
+
+enum TxStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}

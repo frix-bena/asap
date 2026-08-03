@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ────────────────────────────────────────────────────────────
+model User {
+  id           String   @id @default(cuid())
+  phone        String   @unique            // M-Pesa registered number e.g. 2547XXXXXXXX
+  passwordHash String
+  fullName     String
+  referralCode String   @unique @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  wallet       Wallet?
+  investments  Investment[]
+  transactions Transaction[]
+  referralsSent     Referral[] @relation("Referrer")
+  referralsReceived Referral[] @relation("Referee")
+}
+
+// ─── Wallet ───────────────────────────────────────────────────────────
+model Wallet {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id])
+  // withdrawable = claimable + bonuses
+  withdrawable   Decimal @default(0) @db.Decimal(12, 2)
+  totalEarned    Decimal @default(0) @db.Decimal(12, 2)
+  totalWithdrawn Decimal @default(0) @db.Decimal(12, 2)
+  updatedAt      DateTime @updatedAt
+}
+
+// ─── Investment Tiers (seed data) ────────────────────────────────────
+model InvestmentTier {
+  id            String @id @default(cuid())
+  name          String @unique               // "Tier 1", "Tier 2" …
+  depositAmt    Decimal @db.Decimal(12, 2)   // 250, 500, 750 …
+  dailyClaim    Decimal @db.Decimal(12, 2)   // 70, 140, 210 …
+  referralBonus Decimal @db.Decimal(12, 2)   // bonus referrer earns per new referral
+  sortOrder     Int     @default(0)
+
+  investments   Investment[]
+}
+
+// ─── Investments ──────────────────────────────────────────────────────
+model Investment {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id])
+  tierId       String
+  tier         InvestmentTier   @relation(fields: [tierId], references: [id])
+  status       InvestmentStatus @default(PENDING)
+  // Timer fields
+  activatedAt  DateTime?        // when STK Push confirmed
+  lastClaimedAt DateTime?       // last successful claim
+  nextClaimAt  DateTime?        // activatedAt / lastClaimedAt + 24h
+  // Stats
+  totalClaimed Decimal  @default(0) @db.Decimal(12, 2)
+  mpesaRef     String?          // Safaricom CheckoutRequestID
+  createdAt    DateTime @default(now())
+
+  @@index([userId, status])
+}
+
+// ─── Transactions ────────────────────────────────────────────────────
+model Transaction {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  type        TransactionType
+  amount      Decimal         @db.Decimal(12, 2)  // gross amount
+  fee         Decimal         @default(0) @db.Decimal(12, 2)
+  netAmount   Decimal         @db.Decimal(12, 2)  // amount after fee
+  status      TxStatus        @default(PENDING)
+  reference   String          @unique @default(cuid())
+  mpesaRef    String?         // Safaricom MpesaReceiptNumber
+  description String?
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([userId, type])
+}
+
+// ─── Referrals ───────────────────────────────────────────────────────
+model Referral {
+  id          String   @id @default(cuid())
+  referrerId  String
+  referrer    User     @relation("Referrer", fields: [referrerId], references: [id])
+  refereeId   String   @unique  // one referral record per new user
+  referee     User     @relation("Referee", fields: [refereeId], references: [id])
+  bonusAmount Decimal  @default(0) @db.Decimal(12, 2)
+  paid        Boolean  @default(false)
+  paidAt      DateTime?
+  createdAt   DateTime @default(now())
+}
+
+// ─── MPesa Callbacks (audit log) ────────────────────────────────────
+model MpesaCallback {
+  id          String   @id @default(cuid())
+  callbackType String  // "stkpush" | "b2c_result" | "b2c_timeout"
+  payload     Json
+  processed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────
+enum InvestmentStatus {
+  PENDING   // STK Push sent, waiting callback
+  ACTIVE    // Confirmed, timer running
+  CANCELLED // STK Push failed/timed out
+}
+
+enum TransactionType {
+  SIGNUP_BONUS
+  DEPOSIT
+  CLAIM
+  REFERRAL_BONUS
+  WITHDRAWAL
+}
+
+enum TxStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
