@@ -1,5 +1,5 @@
 // ── Config ──────────────────────────────────────────────
-const API_BASE = ''; // Same origin — Express serves both website & API on :4000
+const API_BASE = 'http://127.0.0.1:5000'; // Explicit IPv4 — avoids localhost IPv6 resolution issues
 
 // ── Auth Helpers ─────────────────────────────────────────
 const Auth = {
@@ -29,7 +29,9 @@ const api = {
     const headers = { 'Content-Type': 'application/json' };
     const token = Auth.getToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}${path}`, {
+    const url = `${API_BASE}${path}`;
+    console.log('[API] Fetching:', method, url); // ← debug: verify URL is not undefined
+    const res = await fetch(url, {
       method, headers,
       body: body ? JSON.stringify(body) : undefined,
     });
@@ -75,7 +77,7 @@ function populateSidebar() {
   const emailEl = document.getElementById('sidebar-email');
   const avatarEl = document.getElementById('sidebar-avatar');
   if (nameEl)   nameEl.textContent  = user.fullName || 'User';
-  if (emailEl)  emailEl.textContent = user.email || '';
+  if (emailEl)  emailEl.textContent = user.phone || '';
   if (avatarEl) avatarEl.textContent = (user.fullName || 'U')[0].toUpperCase();
 }
 
