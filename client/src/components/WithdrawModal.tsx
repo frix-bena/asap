@@ -32,7 +32,7 @@ export default function WithdrawModal({
             <div>
               <h2 className="text-lg font-semibold">Withdraw Funds</h2>
               <p className="text-xs text-slate-400">
-                Available: <span className="text-emerald-400 font-semibold">${fmt(wallet?.balance)}</span>
+                Available: <span className="text-emerald-400 font-semibold">KES {fmt(wallet?.balance)}</span>
               </p>
             </div>
           </div>
@@ -49,7 +49,7 @@ export default function WithdrawModal({
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Amount (USD)</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Amount (KES)</label>
             <input
               type="number" min="1" max={balance} step="any"
               className={`input-field text-lg ${insufficient ? "border-red-500/50" : ""}`}

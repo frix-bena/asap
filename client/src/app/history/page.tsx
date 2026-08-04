@@ -57,7 +57,7 @@ export default function HistoryPage() {
                           </div>
                         </td>
                         <td className={`text-right py-3.5 font-semibold ${cfg.cls}`}>
-                          {tx.type === "WITHDRAWAL" ? "-" : "+"}${fmt(tx.amount)}
+                          {tx.type === "WITHDRAWAL" ? "-" : "+"}KES {fmt(tx.amount)}
                         </td>
                         <td className="text-center py-3.5">
                           <span className={`badge ${tx.status === "COMPLETED" ? "badge-green" : "badge-amber"} text-xs`}>

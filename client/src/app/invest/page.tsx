@@ -83,7 +83,7 @@ export default function InvestPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Min / Max</span>
-                      <span>${fmt(plan.minAmount)} – ${fmt(plan.maxAmount)}</span>
+                      <span>KES {fmt(plan.minAmount)} – KES {fmt(plan.maxAmount)}</span>
                     </div>
                   </div>
                   {isSelected && (

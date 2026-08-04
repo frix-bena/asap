@@ -80,7 +80,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">{label}</p>
                 <p className="text-3xl font-bold mt-2">
-                  {isCount ? value : `$${fmt(value)}`}
+                  {isCount ? value : `KES ${fmt(value)}`}
                 </p>
               </div>
               <div className={`p-2.5 rounded-xl bg-gradient-to-br ${from} ${to} bg-opacity-10`}>
@@ -111,12 +111,12 @@ export default function DashboardPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
               <XAxis dataKey="day" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false}
-                tickFormatter={(v) => `$${v}`} />
+                tickFormatter={(v) => `KES ${v}`} />
               <Tooltip
                 contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}
                 labelStyle={{ color: "#94a3b8" }}
                 itemStyle={{ color: "#a78bfa" }}
-                formatter={(v: any) => [`$${v.toFixed(4)}`, "ROI Earned"]}
+                formatter={(v: any) => [`KES ${v.toFixed(4)}`, "ROI Earned"]}
               />
               <Area type="monotone" dataKey="earned" stroke="#7c3aed" strokeWidth={2} fill="url(#roiGrad)" />
             </AreaChart>
@@ -145,11 +145,11 @@ export default function DashboardPage() {
                     <td className="py-3">
                       <span className="badge badge-violet">{inv.plan.name}</span>
                     </td>
-                    <td className="text-right py-3">${fmt(inv.principal)}</td>
+                    <td className="text-right py-3">KES {fmt(inv.principal)}</td>
                     <td className="text-right py-3 text-emerald-400">
                       {(parseFloat(inv.plan.dailyRatePct) * 100).toFixed(1)}%
                     </td>
-                    <td className="text-right py-3 text-amber-400">${fmt(inv.earnedToDate)}</td>
+                    <td className="text-right py-3 text-amber-400">KES {fmt(inv.earnedToDate)}</td>
                     <td className="text-right py-3 text-slate-400">
                       {new Date(inv.maturityDate).toLocaleDateString()}
                     </td>

@@ -46,7 +46,7 @@ export default function DepositModal({ onClose, onSuccess }: { onClose: () => vo
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Amount (USD)</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Amount (KES)</label>
             <input
               type="number" min="1" step="any"
               className="input-field text-lg"
