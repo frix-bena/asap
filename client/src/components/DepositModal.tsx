@@ -59,7 +59,7 @@ export default function DepositModal({ onClose, onSuccess }: { onClose: () => vo
             {quickAmounts.map((p) => (
               <button key={p} onClick={() => setAmount(String(p))}
                 className={`btn-secondary text-sm px-3 py-1.5 ${amount === String(p) ? "border-violet-500 text-violet-300" : ""}`}>
-                +${p.toLocaleString()}
+                KES {p.toLocaleString()}
               </button>
             ))}
           </div>
