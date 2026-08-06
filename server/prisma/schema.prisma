@@ -7,37 +7,44 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  phone        String        @unique
-  passwordHash String
-  fullName     String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  wallet       Wallet?
-  investments  Investment[]
-  transactions Transaction[]
+  id             String        @id @default(cuid())
+  phone          String        @unique
+  passwordHash   String
+  fullName       String
+  referralCode   String        @unique @default(cuid())
+  referredById   String?
+  referredBy     User?         @relation("Referrals", fields: [referredById], references: [id])
+  referrals      User[]        @relation("Referrals")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  wallet         Wallet?
+  investments    Investment[]
+  transactions   Transaction[]
 }
 
 model Wallet {
   id             String   @id @default(cuid())
   userId         String   @unique
   user           User     @relation(fields: [userId], references: [id])
-  balance        Decimal  @default(0) @db.Decimal(18, 8)
-  totalDeposited Decimal  @default(0) @db.Decimal(18, 8)
-  totalWithdrawn Decimal  @default(0) @db.Decimal(18, 8)
-  totalEarned    Decimal  @default(0) @db.Decimal(18, 8)
+  balance        Decimal  @default(0) @db.Decimal(18, 2)
+  totalDeposited Decimal  @default(0) @db.Decimal(18, 2)
+  totalWithdrawn Decimal  @default(0) @db.Decimal(18, 2)
+  totalEarned    Decimal  @default(0) @db.Decimal(18, 2)
   updatedAt      DateTime @updatedAt
 }
 
+// Fixed-price investment tier (e.g. KES 250 → KES 70/day)
 model InvestmentPlan {
-  id           String       @id @default(cuid())
-  name         String       @unique
-  dailyRatePct Decimal      @db.Decimal(5, 4)
-  minAmount    Decimal      @db.Decimal(18, 8)
-  maxAmount    Decimal      @db.Decimal(18, 8)
-  durationDays Int
-  description  String?
-  investments  Investment[]
+  id             String       @id @default(cuid())
+  name           String       @unique
+  price          Decimal      @db.Decimal(18, 2)   // exact KES amount user pays
+  dailyReturn    Decimal      @db.Decimal(18, 2)   // exact KES credited daily
+  referralBonus  Decimal      @db.Decimal(18, 2)   // KES awarded to referrer
+  durationDays   Int
+  description    String?
+  isActive       Boolean      @default(true)
+  sortOrder      Int          @default(0)
+  investments    Investment[]
 }
 
 model Investment {
@@ -46,8 +53,8 @@ model Investment {
   user         User             @relation(fields: [userId], references: [id])
   planId       String
   plan         InvestmentPlan   @relation(fields: [planId], references: [id])
-  principal    Decimal          @db.Decimal(18, 8)
-  earnedToDate Decimal          @default(0) @db.Decimal(18, 8)
+  principal    Decimal          @db.Decimal(18, 2)
+  earnedToDate Decimal          @default(0) @db.Decimal(18, 2)
   status       InvestmentStatus @default(ACTIVE)
   startDate    DateTime         @default(now())
   maturityDate DateTime
@@ -61,7 +68,7 @@ model Transaction {
   userId       String
   user         User            @relation(fields: [userId], references: [id])
   type         TransactionType
-  amount       Decimal         @db.Decimal(18, 8)
+  amount       Decimal         @db.Decimal(18, 2)
   status       TxStatus        @default(PENDING)
   reference    String          @unique @default(cuid())
   investmentId String?
@@ -81,6 +88,7 @@ enum TransactionType {
   DEPOSIT
   WITHDRAWAL
   ROI_PAYOUT
+  REFERRAL_BONUS
 }
 
 enum TxStatus {
