@@ -12,11 +12,11 @@ async function processRoiForInvestment(investment) {
     return;
   }
 
-  const roiAmount = new Prisma.Decimal(principal).mul(new Prisma.Decimal(plan.dailyRatePct));
+  const roiAmount = new Prisma.Decimal(plan.dailyReturn);
 
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT id FROM wallets WHERE user_id = ${userId}::text FOR UPDATE`;
+      await tx.$executeRaw`SELECT id FROM "Wallet" WHERE "userId" = ${userId} FOR UPDATE`;
 
       await tx.wallet.update({
         where: { userId },
@@ -38,7 +38,7 @@ async function processRoiForInvestment(investment) {
           amount: roiAmount,
           status: "COMPLETED",
           investmentId: id,
-          metadata: { dailyRate: plan.dailyRatePct.toString(), principal: principal.toString() },
+          metadata: { dailyReturn: plan.dailyReturn.toString(), principal: principal.toString() },
         },
       });
     });

@@ -22,14 +22,22 @@ router.post(
 
       const { phone, password, fullName } = req.body;
 
-      const existing = await prisma.user.findUnique({ where: { phone } });
+      // Data Sanitization: Strip non-numeric characters
+      const cleanedPhone = phone.replace(/\D/g, "");
+
+      // Validation Check
+      if (!cleanedPhone || cleanedPhone.length < 9 || cleanedPhone.length > 15) {
+        return res.status(400).json({ error: "Invalid phone number format" });
+      }
+
+      const existing = await prisma.user.findUnique({ where: { phone: cleanedPhone } });
       if (existing) return res.status(409).json({ error: "Phone number already registered." });
 
       const passwordHash = await bcrypt.hash(password, 12);
 
       const user = await prisma.user.create({
         data: {
-          phone,
+          phone: cleanedPhone,
           fullName,
           passwordHash,
           wallet: { create: {} },
@@ -39,7 +47,12 @@ router.post(
 
       res.status(201).json({ token: signToken(user.id), user });
     } catch (error) {
-      console.error('Register error:', error);
+      console.dir(error, { depth: null });
+
+      if (error.code === 'P2002') {
+        return res.status(400).json({ error: "This phone number is already registered" });
+      }
+
       res.status(500).json({ error: "Internal server error." });
     }
   }
@@ -48,22 +61,33 @@ router.post(
 // POST /api/auth/login
 router.post(
   "/login",
-  [body("phone").notEmpty(), body("password").notEmpty()],
+  [body("phone").notEmpty().withMessage("Phone number is required"), body("password").notEmpty().withMessage("Password is required")],
   async (req, res) => {
     try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
       const { phone, password } = req.body;
 
+      // Data Sanitization: Strip non-numeric characters for consistency with registration
+      const cleanedPhone = phone.replace(/\D/g, "");
+
+      // Validation Check
+      if (!cleanedPhone) {
+        return res.status(400).json({ error: "Invalid phone number format" });
+      }
+
       // Database Query Audit
-      const user = await prisma.user.findUnique({ where: { phone } });
+      const user = await prisma.user.findUnique({ where: { phone: cleanedPhone } });
       
       // Null User Handling
       if (!user) {
-        return res.status(401).json({ message: "Invalid phone number or password" });
+        return res.status(401).json({ error: "Invalid phone number or password" });
       }
       
       const isMatch = await bcrypt.compare(password, user.passwordHash);
       if (!isMatch) {
-        return res.status(401).json({ message: "Invalid phone number or password" });
+        return res.status(401).json({ error: "Invalid phone number or password" });
       }
 
       res.json({

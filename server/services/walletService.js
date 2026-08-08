@@ -67,7 +67,15 @@ async function activateTier(userId, planId) {
   return prisma.$transaction(async (tx) => {
 
     // ── 1. Load plan ───────────────────────────────────────────────────────
-    const plan = await tx.investmentPlan.findUniqueOrThrow({ where: { id: planId } });
+    const plan = await tx.investmentPlan.findFirst({
+      where: {
+        OR: [
+          { id: planId },
+          { name: { equals: planId, mode: "insensitive" } },
+        ],
+      },
+    });
+    if (!plan) throw new Error("Investment plan not found.");
     if (!plan.isActive) throw new Error("This plan is currently unavailable.");
     const price = new Prisma.Decimal(plan.price);
 
