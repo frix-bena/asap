@@ -2,7 +2,9 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
-  "prisma": { "seed": "node prisma/seed.js" },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js"
@@ -14,6 +16,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "axios": "^1.19.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -28,8 +31,5 @@
   "devDependencies": {
     "nodemon": "^3.1.14",
     "prisma": "^7.9.1"
-  },
-  "prisma": {
-    "seed": "node prisma/seed.js"
   }
 }

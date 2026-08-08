@@ -1,9 +1,9 @@
-const path    = require("path");
+const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
-const cors    = require("cors");
-const helmet  = require("helmet");
-const morgan  = require("morgan");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
 
 // Boot ROI worker (registers cron job)
 require("./workers/roiWorker");
@@ -33,13 +33,16 @@ app.use("/website", express.static(path.join(__dirname, "../website")));
 app.get("/", (req, res) => res.redirect("/website/index.html"));
 
 // Routes
-app.use("/api/auth",    require("./routes/auth"));
-app.use("/api/wallet",  require("./routes/wallet"));
-app.use("/api/invest",  require("./routes/invest"));
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/wallet", require("./routes/wallet"));
+app.use("/api/mpesa", require("./routes/mpesa"));
+app.use("/api/invest", require("./routes/invest"));
 app.use("/api/history", require("./routes/history"));
 
 // Health check
-app.get("/health", (req, res) => res.json({ status: "ok", ts: new Date().toISOString() }));
+app.get("/health", (req, res) =>
+  res.json({ status: "ok", app: process.env.APP_NAME || "vault agencies", ts: new Date().toISOString() })
+);
 
 // Admin: manually trigger ROI (dev only)
 if (process.env.NODE_ENV === "development") {
@@ -56,5 +59,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error." });
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () =>
+  console.log(`🚀 Server running on http://localhost:${PORT}`)
+);
