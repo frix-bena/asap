@@ -8,6 +8,7 @@ const {
   getDepositStatus,
   mockConfirmDeposit,
 } = require("../services/walletService");
+const { formatPhoneNumber } = require("../lib/daraja");
 const { prisma } = require("../lib/prisma");
 
 // ── Public Webhook for Safaricom Callback ─────────────────────────────────────
@@ -38,30 +39,54 @@ router.get("/", async (req, res) => {
 });
 
 // POST /api/wallet/deposit
-// Body: { amount: number, phone?: string, direct?: boolean }
+// Body: { amount: number, phone?: string, phoneNumber?: string, direct?: boolean }
 // If direct === true, executes direct wallet credit; otherwise fires M-Pesa STK Push prompt to user's phone.
 router.post("/deposit", async (req, res) => {
   const amount = parseFloat(req.body.amount);
   if (isNaN(amount) || amount <= 0) {
-    return res.status(400).json({ error: "Provide a valid positive amount." });
+    return res.status(400).json({
+      success: false,
+      error: "Provide a valid positive amount.",
+      message: "Provide a valid positive amount.",
+    });
   }
 
   // If user explicitly asks for direct top-up / simulation
   if (req.body.direct === true) {
     try {
       const result = await deposit(req.user.sub, amount);
-      return res.json(result);
+      return res.json({ success: true, ...result });
     } catch (err) {
-      return res.status(400).json({ error: err.message });
+      console.error("[Wallet Deposit Direct] Error:", err.message);
+      return res.status(400).json({
+        success: false,
+        error: err.message,
+        message: err.message,
+      });
     }
   }
 
   // Default: Initiate real Daraja STK Push prompt to the user's phone
   try {
-    const result = await initiateMpesaDeposit(req.user.sub, amount, req.body.phone);
-    res.json(result);
+    const rawPhone = req.body.phoneNumber || req.body.phone;
+    const formattedPhone = rawPhone ? formatPhoneNumber(rawPhone) : undefined;
+    const result = await initiateMpesaDeposit(req.user.sub, amount, formattedPhone);
+    return res.json({ success: true, ...result });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(
+      "[Route /api/wallet/deposit] STK Push Error:",
+      err.response?.data || err.message
+    );
+    const msg =
+      err.response?.data?.errorMessage ||
+      err.response?.data?.ResponseDescription ||
+      err.message ||
+      "Failed to initiate M-Pesa STK push.";
+    return res.status(400).json({
+      success: false,
+      error: msg,
+      message: msg,
+    });
   }
 });
 

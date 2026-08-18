@@ -1,6 +1,6 @@
 const { prisma } = require("../lib/prisma");
 const { Prisma } = require("@prisma/client");
-const { stkPush, normalizePhone, DARAJA } = require("../lib/daraja");
+const { stkPush, formatPhoneNumber, normalizePhone, DARAJA } = require("../lib/daraja");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // M-PESA STK PUSH DEPOSIT (Lipa Na M-Pesa Online)
@@ -23,11 +23,11 @@ async function initiateMpesaDeposit(userId, amount, customPhone) {
 
   // Use provided custom phone or user's registered phone
   const rawPhone = customPhone || user.phone;
-  const targetPhone = normalizePhone(rawPhone);
+  const targetPhone = formatPhoneNumber(rawPhone);
 
   if (!targetPhone || targetPhone.length < 12) {
     throw new Error(
-      "Invalid phone number. Ensure a valid Kenyan M-Pesa number is registered."
+      "Invalid phone number. Ensure a valid Kenyan M-Pesa number (e.g. 07XXXXXXXX, 01XXXXXXXX, or 254XXXXXXXXX) is registered."
     );
   }
 
@@ -39,12 +39,13 @@ async function initiateMpesaDeposit(userId, amount, customPhone) {
   try {
     stkResponse = await stkPush({
       phone: targetPhone,
+      phoneNumber: targetPhone,
       amount: numericAmount,
       accountRef: appDisplayName, // Shows prompt name "vault agencies"
       description: `${appDisplayName} Deposit`,
     });
   } catch (err) {
-    console.error("[Deposit] STK Push trigger error:", err.message);
+    console.error("[Deposit] STK Push trigger error:", err.response?.data || err.message);
     if (DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production" || DARAJA.IS_MOCK) {
       console.warn("[Deposit] Falling back to simulated prompt on error:", err.message);
       stkResponse = {
@@ -55,11 +56,19 @@ async function initiateMpesaDeposit(userId, amount, customPhone) {
         CustomerMessage: `Success. Request accepted for processing. Please check your phone ${targetPhone} to enter M-Pesa PIN.`,
         isMock: true,
         phone: targetPhone,
+        phoneNumber: targetPhone,
         amount: numericAmount,
         accountRef: appDisplayName,
       };
     } else {
-      throw new Error(err.message || "Failed to trigger M-Pesa STK push prompt.");
+      const customError = new Error(
+        err.response?.data?.errorMessage ||
+        err.response?.data?.ResponseDescription ||
+        err.message ||
+        "Failed to trigger M-Pesa STK push prompt."
+      );
+      customError.response = err.response;
+      throw customError;
     }
   }
 

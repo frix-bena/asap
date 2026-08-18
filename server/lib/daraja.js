@@ -1,14 +1,38 @@
 /**
- * Safaricom Daraja API Integration for Vault Agencies
+ * Safaricom Daraja API Integration for Mwosho / Vault
  *
  * Implements:
- *  1. OAuth Token Management (Automatic cache & refresh)
+ *  1. OAuth Token Management (Automatic cache & refresh with full error catching)
  *  2. STK Push (Lipa Na M-Pesa Online / Prompt to phone for PIN entry)
  *  3. STK Push Query (Status check)
- *  4. Secure Account Reference masking (Displays prompt name "vault agencies" instead of internal account details)
+ *  4. Secure Account Reference masking
+ *  5. Phone Number Sanitization (Auto-converts 07XX/01XX/+254XX to 254XXXXXXXXX)
+ *  6. Callback URL validation (Warns on localhost, supports ngrok override)
  */
 
 const axios = require("axios");
+
+/**
+ * Validates and normalizes Callback URL
+ * Warns if localhost / 127.0.0.1 is used since Safaricom cannot route to local addresses.
+ */
+function validateCallbackUrl(url) {
+  const cb =
+    url ||
+    (process.env.NGROK_URL
+      ? `${process.env.NGROK_URL.replace(/\/$/, "")}/api/mpesa/stk-callback`
+      : null) ||
+    process.env.MPESA_CALLBACK_URL ||
+    process.env.CALLBACK_URL ||
+    "http://127.0.0.1:5000/api/mpesa/stk-callback";
+
+  if (cb.includes("localhost") || cb.includes("127.0.0.1")) {
+    console.warn(
+      `[Daraja Warning] CALLBACK_URL is set to "${cb}". Safaricom Daraja cannot deliver callbacks to localhost or 127.0.0.1. In development, configure NGROK_URL or MPESA_CALLBACK_URL with a public forwarding address.`
+    );
+  }
+  return cb;
+}
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 const DARAJA = {
@@ -46,10 +70,7 @@ const DARAJA = {
     return process.env.MPESA_RECEIVER_NUMBER || "0741308125";
   },
   get CALLBACK_URL() {
-    return (
-      process.env.MPESA_CALLBACK_URL ||
-      "http://127.0.0.1:5000/api/wallet/mpesa/callback"
-    );
+    return validateCallbackUrl();
   },
   get APP_NAME() {
     // Name displayed on user's M-Pesa PIN prompt (Masks internal account details for security)
@@ -88,11 +109,11 @@ async function getAccessToken() {
     return "mock_daraja_access_token_" + Date.now();
   }
 
-  const authHeader = Buffer.from(
-    `${DARAJA.CONSUMER_KEY}:${DARAJA.CONSUMER_SECRET}`
-  ).toString("base64");
-
   try {
+    const authHeader = Buffer.from(
+      `${DARAJA.CONSUMER_KEY}:${DARAJA.CONSUMER_SECRET}`
+    ).toString("base64");
+
     const { data } = await axios.get(
       `${DARAJA.BASE_URL}/oauth/v1/generate?grant_type=client_credentials`,
       {
@@ -111,70 +132,76 @@ async function getAccessToken() {
     return _cachedToken;
   } catch (err) {
     console.error(
-      "[Daraja] OAuth error:",
+      "[Daraja] OAuth token generation error:",
       err.response?.data || err.message
     );
-    if (DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production" || DARAJA.IS_MOCK) {
-      console.warn("[Daraja] Falling back to mock token due to OAuth network/auth error in sandbox/dev.");
+    if (
+      DARAJA.ENV === "sandbox" ||
+      process.env.NODE_ENV !== "production" ||
+      DARAJA.IS_MOCK
+    ) {
+      console.warn(
+        "[Daraja] Falling back to mock token due to OAuth network/auth error in sandbox/dev."
+      );
       return "mock_daraja_access_token_" + Date.now();
     }
-    throw new Error(
-      `Daraja authentication failed: ${
-        err.response?.data?.errorMessage || err.message
-      }`
-    );
+    const errorMessage =
+      err.response?.data?.errorMessage ||
+      err.response?.data?.ResponseDescription ||
+      err.message ||
+      "Daraja authentication failed";
+    const customError = new Error(errorMessage);
+    customError.response = err.response;
+    throw customError;
   }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /**
- * Format date as YYYYMMDDHHmmss in East Africa Time (UTC+3)
+ * Format date as YYYYMMDDHHmmss
  */
 function getTimestamp() {
-  const now = new Date();
-  // East Africa Time is UTC+3
-  const eatTime = new Date(now.getTime() + 3 * 60 * 60 * 1000);
-  const pad = (n) => String(n).padStart(2, "0");
+  const date = new Date();
+  const timestamp =
+    date.getFullYear() +
+    ("0" + (date.getMonth() + 1)).slice(-2) +
+    ("0" + date.getDate()).slice(-2) +
+    ("0" + date.getHours()).slice(-2) +
+    ("0" + date.getMinutes()).slice(-2) +
+    ("0" + date.getSeconds()).slice(-2);
 
-  const year = eatTime.getUTCFullYear();
-  const month = pad(eatTime.getUTCMonth() + 1);
-  const day = pad(eatTime.getUTCDate());
-  const hours = pad(eatTime.getUTCHours());
-  const minutes = pad(eatTime.getUTCMinutes());
-  const seconds = pad(eatTime.getUTCSeconds());
-
-  return `${year}${month}${day}${hours}${minutes}${seconds}`;
+  return timestamp;
 }
 
 /**
- * Generate Base64 Password for STK Push
+ * Generate Base64 Password for STK Push: base64(Shortcode + Passkey + Timestamp)
  */
-function generatePassword(shortcode, passkey, timestamp) {
-  const raw = `${shortcode}${passkey}${timestamp}`;
-  return Buffer.from(raw).toString("base64");
+function generatePassword(shortCode, passkey, timestamp) {
+  return Buffer.from(`${shortCode}${passkey}${timestamp}`).toString("base64");
 }
 
 /**
- * Normalize Kenyan phone number to 254XXXXXXXXX
- * Handles: 07XXXXXXXX, 01XXXXXXXX, 7XXXXXXXX, +254XXXXXXXXX, 254XXXXXXXXX
+ * Sanitization helper to convert any Kenyan phone format to 254XXXXXXXXX
+ * Handles: 07XXXXXXXX, 01XXXXXXXX, 7XXXXXXXX, 1XXXXXXXX, +254XXXXXXXXX, 254XXXXXXXXX
  */
-function normalizePhone(phone) {
+function formatPhoneNumber(phone) {
   if (!phone) return "";
-  let p = String(phone).replace(/\D/g, ""); // remove non-digits
-
-  if (p.startsWith("0")) {
-    p = "254" + p.slice(1);
-  } else if (p.startsWith("7") || p.startsWith("1")) {
-    p = "254" + p;
-  } else if (p.startsWith("254")) {
-    // already 254
-  } else if (p.length === 9) {
-    p = "254" + p;
+  let cleaned = String(phone).replace(/\D/g, ""); // Remove non-digits
+  if (cleaned.startsWith("0")) {
+    return "254" + cleaned.slice(1);
   }
-
-  return p;
+  if (cleaned.startsWith("7") || cleaned.startsWith("1")) {
+    return "254" + cleaned;
+  }
+  if (cleaned.startsWith("254")) {
+    return cleaned;
+  }
+  return cleaned;
 }
+
+// Alias for backwards compatibility
+const normalizePhone = formatPhoneNumber;
 
 // ── STK Push (Lipa Na M-Pesa Online) ──────────────────────────────────────────
 
@@ -183,16 +210,28 @@ function normalizePhone(phone) {
  * Prompts user directly on their handset for M-Pesa PIN.
  *
  * @param {Object} params
- * @param {string} params.phone        - User's phone number
- * @param {number} params.amount       - Amount to deposit (KES)
- * @param {string} [params.accountRef] - Prompt name displayed on PIN prompt (Defaults to "vault agencies")
- * @param {string} [params.description]- Description (e.g. "vault agencies Deposit")
- * @param {string} [params.callbackUrl]- Webhook callback URL
+ * @param {string} [params.phone]        - User's phone number
+ * @param {string} [params.phoneNumber]  - User's phone number alias
+ * @param {number} params.amount         - Amount to deposit (KES)
+ * @param {string} [params.accountRef]   - Prompt name displayed on PIN prompt
+ * @param {string} [params.description]  - Description
+ * @param {string} [params.callbackUrl]  - Webhook callback URL
  */
-async function stkPush({ phone, amount, accountRef, description, callbackUrl }) {
-  const normalizedPhone = normalizePhone(phone);
-  if (!normalizedPhone || normalizedPhone.length < 12) {
-    throw new Error("Invalid Kenyan phone number for M-Pesa.");
+async function stkPush({
+  phone,
+  phoneNumber,
+  amount,
+  accountRef,
+  description,
+  callbackUrl,
+}) {
+  const rawPhone = phoneNumber || phone;
+  const formattedPhone = formatPhoneNumber(rawPhone);
+
+  if (!formattedPhone || formattedPhone.length < 12) {
+    throw new Error(
+      "Invalid Kenyan phone number for M-Pesa. Ensure a valid format such as 07XXXXXXXX, 01XXXXXXXX, or 254XXXXXXXXX."
+    );
   }
 
   const roundedAmount = Math.round(Number(amount));
@@ -201,22 +240,29 @@ async function stkPush({ phone, amount, accountRef, description, callbackUrl }) 
   }
 
   // Prompt Name shown on M-Pesa PIN prompt (Internal account numbers hidden for security)
-  const appDisplayName = (accountRef || DARAJA.APP_NAME || "vault agencies");
-  const txDescription = (description || `${DARAJA.APP_NAME} Deposit`).slice(0, 32);
-  const cbUrl = callbackUrl || DARAJA.CALLBACK_URL;
+  const appDisplayName = accountRef || DARAJA.APP_NAME || "vault agencies";
+  const txDescription = (
+    description || `${DARAJA.APP_NAME} Deposit`
+  ).slice(0, 32);
+  const cbUrl = validateCallbackUrl(callbackUrl || DARAJA.CALLBACK_URL);
 
   // If in Mock / Dev mode without real credentials, return simulated STK push response
   if (DARAJA.IS_MOCK) {
-    const mockCheckoutId = `ws_CO_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
-    console.log(`[Daraja MOCK] STK Push sent to ${normalizedPhone} for KES ${roundedAmount}. Prompt Name: ${appDisplayName}`);
+    const mockCheckoutId = `ws_CO_${Date.now()}_${Math.floor(
+      Math.random() * 100000
+    )}`;
+    console.log(
+      `[Daraja MOCK] STK Push sent to ${formattedPhone} for KES ${roundedAmount}. Prompt Name: ${appDisplayName}`
+    );
     return {
       MerchantRequestID: `MOCK_REQ_${Date.now()}`,
       CheckoutRequestID: mockCheckoutId,
       ResponseCode: "0",
       ResponseDescription: "Success. Request accepted for processing",
-      CustomerMessage: `Success. Request accepted for processing. Please check your phone ${normalizedPhone} to enter M-Pesa PIN.`,
+      CustomerMessage: `Success. Request accepted for processing. Please check your phone ${formattedPhone} to enter M-Pesa PIN.`,
       isMock: true,
-      phone: normalizedPhone,
+      phone: formattedPhone,
+      phoneNumber: formattedPhone,
       amount: roundedAmount,
       accountRef: appDisplayName,
     };
@@ -225,7 +271,11 @@ async function stkPush({ phone, amount, accountRef, description, callbackUrl }) 
   try {
     const token = await getAccessToken();
     const timestamp = getTimestamp();
-    const password = generatePassword(DARAJA.SHORTCODE, DARAJA.PASSKEY, timestamp);
+    const password = generatePassword(
+      DARAJA.SHORTCODE,
+      DARAJA.PASSKEY,
+      timestamp
+    );
 
     const payload = {
       BusinessShortCode: DARAJA.SHORTCODE,
@@ -233,11 +283,11 @@ async function stkPush({ phone, amount, accountRef, description, callbackUrl }) 
       Timestamp: timestamp,
       TransactionType: "CustomerPayBillOnline",
       Amount: roundedAmount,
-      PartyA: normalizedPhone,
+      PartyA: formattedPhone,
       PartyB: DARAJA.SHORTCODE,
-      PhoneNumber: normalizedPhone,
+      PhoneNumber: formattedPhone,
       CallBackURL: cbUrl,
-      AccountReference: appDisplayName.slice(0, 12), // Safaricom AccountReference field (Prompt Name)
+      AccountReference: appDisplayName.slice(0, 12),
       TransactionDesc: txDescription,
     };
 
@@ -253,21 +303,40 @@ async function stkPush({ phone, amount, accountRef, description, callbackUrl }) 
       }
     );
 
-    return data;
+    return {
+      ...data,
+      phone: formattedPhone,
+      phoneNumber: formattedPhone,
+      amount: roundedAmount,
+      accountRef: appDisplayName,
+    };
   } catch (err) {
-    console.error("[Daraja] STK Push Request Failed:", err.response?.data || err.message);
-    // In dev / sandbox mode, if Safaricom is unreachable or fails due to network/creds, fallback to simulated prompt
-    if (DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production" || DARAJA.IS_MOCK) {
-      console.warn("[Daraja] Sandbox/network error encountered, falling back to simulated prompt for testing.");
-      const mockCheckoutId = `ws_CO_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    console.error(
+      "[Daraja] STK Push Request Failed:",
+      err.response?.data || err.message
+    );
+
+    // In dev / sandbox mode, fallback to simulated prompt if Safaricom is unreachable
+    if (
+      DARAJA.ENV === "sandbox" ||
+      process.env.NODE_ENV !== "production" ||
+      DARAJA.IS_MOCK
+    ) {
+      console.warn(
+        "[Daraja] Sandbox/network error encountered, falling back to simulated prompt for testing."
+      );
+      const mockCheckoutId = `ws_CO_${Date.now()}_${Math.floor(
+        Math.random() * 100000
+      )}`;
       return {
         MerchantRequestID: `MOCK_REQ_${Date.now()}`,
         CheckoutRequestID: mockCheckoutId,
         ResponseCode: "0",
         ResponseDescription: "Success. Request accepted for processing",
-        CustomerMessage: `Success. Request accepted for processing. Please check your phone ${normalizedPhone} to enter M-Pesa PIN.`,
+        CustomerMessage: `Success. Request accepted for processing. Please check your phone ${formattedPhone} to enter M-Pesa PIN.`,
         isMock: true,
-        phone: normalizedPhone,
+        phone: formattedPhone,
+        phoneNumber: formattedPhone,
         amount: roundedAmount,
         accountRef: appDisplayName,
       };
@@ -276,8 +345,11 @@ async function stkPush({ phone, amount, accountRef, description, callbackUrl }) 
     const errMessage =
       err.response?.data?.errorMessage ||
       err.response?.data?.ResponseDescription ||
-      err.message;
-    throw new Error(`M-Pesa STK push failed: ${errMessage}`);
+      err.message ||
+      "Failed to initiate M-Pesa STK push.";
+    const customError = new Error(errMessage);
+    customError.response = err.response;
+    throw customError;
   }
 }
 
@@ -286,7 +358,8 @@ async function stkPush({ phone, amount, accountRef, description, callbackUrl }) 
 /**
  * Query STK Push status directly from Safaricom
  *
- * @param {string} checkoutRequestId
+ * @param {Object} params
+ * @param {string} params.checkoutRequestId
  */
 async function stkQuery({ checkoutRequestId }) {
   if (DARAJA.IS_MOCK) {
@@ -300,7 +373,11 @@ async function stkQuery({ checkoutRequestId }) {
   try {
     const token = await getAccessToken();
     const timestamp = getTimestamp();
-    const password = generatePassword(DARAJA.SHORTCODE, DARAJA.PASSKEY, timestamp);
+    const password = generatePassword(
+      DARAJA.SHORTCODE,
+      DARAJA.PASSKEY,
+      timestamp
+    );
 
     const payload = {
       BusinessShortCode: DARAJA.SHORTCODE,
@@ -323,27 +400,40 @@ async function stkQuery({ checkoutRequestId }) {
 
     return data;
   } catch (err) {
-    console.error("[Daraja] STK Query Failed:", err.response?.data || err.message);
-    if (DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production" || DARAJA.IS_MOCK) {
+    console.error(
+      "[Daraja] STK Query Failed:",
+      err.response?.data || err.message
+    );
+    if (
+      DARAJA.ENV === "sandbox" ||
+      process.env.NODE_ENV !== "production" ||
+      DARAJA.IS_MOCK
+    ) {
       return {
         ResponseCode: "0",
         ResultCode: "0",
         ResultDesc: "The service request is processed successfully.",
       };
     }
-    throw new Error(
+    const errMessage =
       err.response?.data?.errorMessage ||
       err.response?.data?.ResponseDescription ||
-      err.message
-    );
+      err.message ||
+      "Failed to query M-Pesa transaction status.";
+    const customError = new Error(errMessage);
+    customError.response = err.response;
+    throw customError;
   }
 }
 
 module.exports = {
   DARAJA,
   getAccessToken,
+  formatPhoneNumber,
   normalizePhone,
+  validateCallbackUrl,
   stkPush,
   stkQuery,
   getTimestamp,
+  generatePassword,
 };

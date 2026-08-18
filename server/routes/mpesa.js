@@ -11,6 +11,7 @@
 
 const router = require("express").Router();
 const { authenticate } = require("../middleware/auth");
+const { formatPhoneNumber } = require("../lib/daraja");
 const {
   initiateMpesaDeposit,
   handleMpesaCallback,
@@ -20,22 +21,39 @@ const {
 
 // ── POST /api/mpesa/stk-push ──────────────────────────────────────────────────
 // Initiates Daraja STK Push prompt to user's phone for PIN entry
-// Body: { amount: number, phone?: string }
+// Body: { amount: number, phone?: string, phoneNumber?: string }
 router.post("/stk-push", authenticate, async (req, res) => {
-  const { amount, phone } = req.body;
+  const { amount, phone, phoneNumber } = req.body;
+  const rawPhone = phoneNumber || phone;
 
-  if (!amount || parseFloat(amount) <= 0) {
-    return res
-      .status(400)
-      .json({ error: "Please enter a valid deposit amount (e.g. KES 100)." });
+  const parsedAmount = parseFloat(amount);
+  if (isNaN(parsedAmount) || parsedAmount <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Please enter a valid deposit amount (e.g. KES 100).",
+    });
   }
 
   try {
-    const result = await initiateMpesaDeposit(req.user.sub, amount, phone);
-    res.status(200).json(result);
+    const formattedPhone = rawPhone ? formatPhoneNumber(rawPhone) : undefined;
+    const result = await initiateMpesaDeposit(req.user.sub, parsedAmount, formattedPhone);
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
   } catch (err) {
-    console.error("[Route /api/mpesa/stk-push] Error:", err.message);
-    res.status(400).json({ error: err.message });
+    console.error(
+      "[Route /api/mpesa/stk-push] STK Push Error:",
+      err.response?.data || err.message
+    );
+    return res.status(400).json({
+      success: false,
+      message:
+        err.response?.data?.errorMessage ||
+        err.response?.data?.ResponseDescription ||
+        err.message ||
+        "Failed to initiate M-Pesa STK push.",
+    });
   }
 });
 

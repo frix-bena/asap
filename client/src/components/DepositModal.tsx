@@ -129,6 +129,7 @@ export default function DepositModal({
       }
 
       const errorMsg =
+        err.response?.data?.message ||
         err.response?.data?.error ||
         err.message ||
         "Deposit request failed. Please try again.";
