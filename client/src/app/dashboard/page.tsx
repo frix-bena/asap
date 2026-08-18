@@ -1,7 +1,7 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { Wallet, TrendingUp, DollarSign, ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
+import { Wallet, TrendingUp, Coins, ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
@@ -42,7 +42,7 @@ export default function DashboardPage() {
   const stats = [
     { label: "Total Balance",      value: wallet?.balance,        icon: Wallet,      cls: "card-violet", from: "from-violet-500", to: "to-purple-700" },
     { label: "Active Investments", value: investments.length,     icon: TrendingUp,  cls: "card-teal",   from: "from-cyan-500",   to: "to-teal-700", isCount: true },
-    { label: "Total Earned",       value: wallet?.totalEarned,    icon: DollarSign,  cls: "card-amber",  from: "from-amber-400",  to: "to-orange-600" },
+    { label: "Total Earned",       value: wallet?.totalEarned,    icon: Coins,       cls: "card-amber",  from: "from-amber-400",  to: "to-orange-600" },
   ];
 
   if (wLoading) return (

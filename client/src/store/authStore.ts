@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-interface User { id: string; email: string; fullName: string; }
+interface User { id: string; phone: string; fullName: string; }
 interface Wallet { balance: string; totalDeposited: string; totalWithdrawn: string; totalEarned: string; }
 
 interface AuthState {

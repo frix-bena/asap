@@ -8,7 +8,7 @@ import { useAuthStore } from "@/store/authStore";
 export default function LoginPage() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ phone: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -40,13 +40,13 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone Number</label>
             <input
-              type="email" required
+              type="tel" required
               className="input-field"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="254700000000"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
             />
           </div>
           <div>

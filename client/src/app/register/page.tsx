@@ -8,7 +8,7 @@ import { useAuthStore } from "@/store/authStore";
 export default function RegisterPage() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const [form, setForm] = useState({ fullName: "", email: "", password: "" });
+  const [form, setForm] = useState({ fullName: "", phone: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -46,9 +46,9 @@ export default function RegisterPage() {
               value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
-            <input type="email" required className="input-field" placeholder="you@example.com"
-              value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone Number</label>
+            <input type="tel" required className="input-field" placeholder="254700000000"
+              value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Password <span className="text-slate-500">(min 8 chars)</span></label>

@@ -16,7 +16,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (r) => r,
   (err) => {
-    if (err.response?.status === 401 && typeof window !== "undefined") {
+    const isAuthRoute = err.config?.url?.includes("/api/auth/login") || err.config?.url?.includes("/api/auth/register");
+    if (err.response?.status === 401 && typeof window !== "undefined" && !isAuthRoute) {
       localStorage.removeItem("invest_token");
       window.location.href = "/login";
     }
