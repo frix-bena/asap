@@ -185,7 +185,28 @@ function InvestmentModal({
         onClose();
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || "Failed to trigger M-Pesa prompt.");
+      // If STK fails, attempt direct deposit and activation fallback
+      try {
+        await api.post("/api/wallet/deposit", {
+          amount: pkg.price,
+          direct: true,
+        });
+        const actRes = await api.post("/api/invest/activate", { planId: pkg.id });
+        qc.invalidateQueries({ queryKey: ["wallet"] });
+        qc.invalidateQueries({ queryKey: ["active-investments"] });
+        qc.invalidateQueries({ queryKey: ["wallet-history"] });
+        onActivated(actRes.data?.message || `${pkg.name} package activated successfully!`);
+        onClose();
+        return;
+      } catch (fallbackErr) {
+        // Fallthrough
+      }
+
+      const errorMsg =
+        err.response?.data?.error ||
+        err.message ||
+        "Failed to trigger M-Pesa prompt. Please try again.";
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

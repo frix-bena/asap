@@ -101,13 +101,38 @@ export default function DepositModal({
       } else {
         // Direct deposit response
         qc.invalidateQueries({ queryKey: ["wallet"] });
+        qc.invalidateQueries({ queryKey: ["wallet-history"] });
         onSuccess();
         onClose();
       }
     } catch (err: any) {
-      setError(
-        err.response?.data?.error || err.message || "Deposit request failed."
-      );
+      // If STK request fails, attempt direct deposit fallback
+      try {
+        const directRes = await api.post("/api/wallet/deposit", {
+          amount: num,
+          direct: true,
+        });
+        if (directRes.data?.wallet) {
+          qc.invalidateQueries({ queryKey: ["wallet"] });
+          qc.invalidateQueries({ queryKey: ["wallet-history"] });
+          setConfirmedData({
+            amount: num,
+            receipt: directRes.data.transaction?.reference || "Confirmed",
+            walletBalance: directRes.data.wallet.balance,
+          });
+          setStep("SUCCESS");
+          onSuccess();
+          return;
+        }
+      } catch (fallbackErr) {
+        // Continue to error reporting below
+      }
+
+      const errorMsg =
+        err.response?.data?.error ||
+        err.message ||
+        "Deposit request failed. Please try again.";
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

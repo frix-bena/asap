@@ -78,7 +78,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><circle cx="17" cy="14" r="1" fill="currentColor"/></svg>
           </div>
         </div>
-        <div class="kpi-value" id="kpi-balance">$—</div>
+        <div class="kpi-value" id="kpi-balance">KES —</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-glow kpi-glow-cyan"></div>
@@ -98,7 +98,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>
           </div>
         </div>
-        <div class="kpi-value" id="kpi-earned">$—</div>
+        <div class="kpi-value" id="kpi-earned">KES —</div>
       </div>
     </div>
 
@@ -139,32 +139,140 @@
 <!-- Deposit Modal -->
 <div class="modal-overlay hidden" id="deposit-modal">
   <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title-row">
-        <div class="modal-icon modal-icon-violet">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    
+    <!-- Step 1: Input Form -->
+    <div id="deposit-step-form">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <div class="modal-icon modal-icon-mpesa">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div>
+            <div class="modal-title">Deposit via M-Pesa</div>
+            <div class="modal-sub">Direct STK Push Prompt to your phone</div>
+          </div>
         </div>
-        <div>
-          <div class="modal-title">Deposit Funds</div>
-          <div class="modal-sub">Add virtual funds to your wallet</div>
-        </div>
+        <button class="modal-close" id="deposit-close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
-      <button class="modal-close" id="deposit-close">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+
+      <div id="deposit-alert" class="alert"></div>
+
+      <div class="form-group">
+        <label class="form-label">M-Pesa Registered Phone Number</label>
+        <input id="deposit-phone" type="tel" class="input" placeholder="07XXXXXXXX" style="font-weight:600" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Deposit Amount (KES)</label>
+        <input id="deposit-amount" type="number" min="1" step="any" class="input" placeholder="0.00" style="font-size:1.15rem;font-weight:700" />
+      </div>
+
+      <div class="quick-amounts" id="quick-amounts">
+        <button class="quick-btn" data-val="100">+KES 100</button>
+        <button class="quick-btn" data-val="250">+KES 250</button>
+        <button class="quick-btn" data-val="500">+KES 500</button>
+        <button class="quick-btn" data-val="1000">+KES 1,000</button>
+        <button class="quick-btn" data-val="2500">+KES 2,500</button>
+      </div>
+
+      <div class="security-badge">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Payment is sent directly to <strong>vault</strong> under prompt <strong>vault agencies</strong>. Receiver account number is strictly masked for security.</span>
+      </div>
+
+      <button class="btn btn-mpesa btn-full" id="deposit-submit" style="margin-top:1.25rem">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Send M-Pesa STK Push
       </button>
     </div>
-    <div id="deposit-alert" class="alert"></div>
-    <div class="form-group">
-      <label class="form-label">Amount (USD)</label>
-      <input id="deposit-amount" type="number" min="1" step="any" class="input" placeholder="0.00" style="font-size:1.15rem" />
+
+    <!-- Step 2: Live Waiting for PIN Entry -->
+    <div id="deposit-step-waiting" class="hidden">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <div class="modal-icon modal-icon-mpesa">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </div>
+          <div>
+            <div class="modal-title">Enter M-Pesa PIN</div>
+            <div class="modal-sub">Check your phone screen</div>
+          </div>
+        </div>
+        <button class="modal-close" id="waiting-close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="stk-waiting-card">
+        <div class="stk-phone-anim">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        </div>
+
+        <h3 style="font-size:1.1rem;font-weight:700;color:var(--text-1);margin-bottom:.35rem">
+          M-Pesa PIN Prompt Sent!
+        </h3>
+        <p style="font-size:.825rem;color:var(--text-2);line-height:1.4;margin-bottom:1rem">
+          Please unlock your phone <span id="stk-target-phone" style="color:var(--text-1);font-weight:600">07XX</span> and enter your M-Pesa PIN to complete payment of <span id="stk-target-amt" style="color:#22c55e;font-weight:700">KES 0.00</span>.
+        </p>
+
+        <div style="background:rgba(255,255,255,0.04);border-radius:.625rem;padding:.75rem 1rem;text-align:left;font-size:.8rem;margin-bottom:1rem;border:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;margin-bottom:.3rem">
+            <span style="color:var(--text-2)">Business / Prompt Name:</span>
+            <span style="font-weight:600;color:#22c55e">vault agencies</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:.3rem">
+            <span style="color:var(--text-2)">Receiver Account:</span>
+            <span style="font-weight:600">vault</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="color:var(--text-2)">Status:</span>
+            <span id="stk-live-status" class="badge badge-mpesa" style="font-size:.7rem">
+              <span class="spinner" style="width:10px;height:10px;border-width:1.5px;margin-right:4px"></span>
+              Waiting for PIN…
+            </span>
+          </div>
+        </div>
+
+        <div id="stk-error-msg" class="alert alert-error" style="margin-top:.75rem"></div>
+
+        <button class="btn btn-secondary btn-full btn-sm" id="btn-cancel-stk" style="margin-top:.5rem">
+          Close Window
+        </button>
+      </div>
     </div>
-    <div class="quick-amounts" id="quick-amounts">
-      <button class="quick-btn" data-val="100">+$100</button>
-      <button class="quick-btn" data-val="500">+$500</button>
-      <button class="quick-btn" data-val="1000">+$1,000</button>
-      <button class="quick-btn" data-val="5000">+$5,000</button>
+
+    <!-- Step 3: Success Confirmed -->
+    <div id="deposit-step-success" class="hidden">
+      <div style="text-align:center;padding:1.5rem .5rem">
+        <div style="width:58px;height:58px;border-radius:50%;background:rgba(16,185,129,0.2);border:2px solid #10b981;margin:0 auto 1rem;display:flex;align-items:center;justify-content:center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h3 style="font-size:1.25rem;font-weight:800;color:#10b981;margin-bottom:.35rem">Deposit Successful!</h3>
+        <p style="font-size:.85rem;color:var(--text-2);margin-bottom:1.25rem">
+          Your wallet balance has been updated immediately.
+        </p>
+
+        <div style="background:rgba(255,255,255,0.04);border-radius:.75rem;padding:1rem;text-align:left;font-size:.825rem;border:1px solid var(--border);margin-bottom:1.5rem">
+          <div style="display:flex;justify-content:space-between;margin-bottom:.4rem">
+            <span style="color:var(--text-2)">Amount Credited:</span>
+            <span id="succ-amount" style="font-weight:700;color:#10b981">KES 0.00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:.4rem">
+            <span style="color:var(--text-2)">M-Pesa Receipt:</span>
+            <span id="succ-receipt" style="font-weight:600;font-family:monospace">QHX...</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="color:var(--text-2)">New Wallet Balance:</span>
+            <span id="succ-balance" style="font-weight:700;color:var(--text-1)">KES 0.00</span>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-full" id="succ-done-btn">Done</button>
+      </div>
     </div>
-    <button class="btn btn-primary btn-full" id="deposit-submit" style="margin-top:1.25rem">Confirm Deposit</button>
+
   </div>
 </div>
 
@@ -178,7 +286,7 @@
         </div>
         <div>
           <div class="modal-title">Withdraw Funds</div>
-          <div class="modal-sub">Available: <span id="withdraw-avail" style="color:var(--emerald);font-weight:600">$—</span></div>
+          <div class="modal-sub">Available: <span id="withdraw-avail" style="color:var(--emerald);font-weight:600">KES —</span></div>
         </div>
       </div>
       <button class="modal-close" id="withdraw-close">
@@ -187,7 +295,7 @@
     </div>
     <div id="withdraw-alert" class="alert"></div>
     <div class="form-group">
-      <label class="form-label">Amount (USD)</label>
+      <label class="form-label">Amount (KES)</label>
       <input id="withdraw-amount" type="number" min="1" step="any" class="input" placeholder="0.00" style="font-size:1.15rem" />
       <div id="withdraw-error" style="color:var(--red);font-size:.78rem;margin-top:.4rem;display:none">Exceeds available balance.</div>
     </div>
@@ -202,6 +310,7 @@
 
   let walletData = null;
   let roiChart   = null;
+  let pollInterval = null;
 
   async function loadDashboard() {
     const [wallet, investments, history] = await Promise.all([
@@ -213,12 +322,12 @@
     walletData = wallet;
 
     // KPIs
-    document.getElementById('kpi-balance').textContent     = '$' + fmt(wallet.balance);
+    document.getElementById('kpi-balance').textContent     = 'KES ' + fmt(wallet.balance);
     document.getElementById('kpi-investments').textContent = investments.length;
-    document.getElementById('kpi-earned').textContent      = '$' + fmt(wallet.totalEarned);
+    document.getElementById('kpi-earned').textContent      = 'KES ' + fmt(wallet.totalEarned);
 
     // Withdraw available
-    document.getElementById('withdraw-avail').textContent = '$' + fmt(wallet.balance);
+    document.getElementById('withdraw-avail').textContent = 'KES ' + fmt(wallet.balance);
 
     // Chart
     const roiData = (history.data || []).slice().reverse();
@@ -238,9 +347,9 @@
       tbody.innerHTML = investments.map(inv => `
         <tr>
           <td><span class="badge badge-violet">${inv.plan.name}</span></td>
-          <td class="right">$${fmt(inv.principal)}</td>
-          <td class="right" style="color:var(--emerald)">${(parseFloat(inv.plan.dailyRatePct)*100).toFixed(1)}%</td>
-          <td class="right" style="color:var(--amber)">$${fmt(inv.earnedToDate)}</td>
+          <td class="right">KES ${fmt(inv.principal)}</td>
+          <td class="right" style="color:var(--emerald)">${(parseFloat(inv.plan.dailyReturn) / parseFloat(inv.plan.price) * 100).toFixed(1)}%</td>
+          <td class="right" style="color:var(--amber)">KES ${fmt(inv.earnedToDate)}</td>
           <td class="right" style="color:var(--text-2)">${new Date(inv.maturityDate).toLocaleDateString()}</td>
         </tr>
       `).join('');
@@ -284,30 +393,70 @@
             borderWidth: 1,
             titleColor: '#94a3b8',
             bodyColor: '#a78bfa',
-            callbacks: { label: ctx => `$${ctx.parsed.y.toFixed(4)}` },
+            callbacks: { label: ctx => `KES ${ctx.parsed.y.toFixed(2)}` },
           },
         },
         scales: {
           x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 11 } } },
-          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 11 }, callback: v => `$${v}` } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 11 }, callback: v => `KES ${v}` } },
         },
       },
     });
   }
 
-  // ── Deposit Modal ─────────────────────────
-  const depositModal  = document.getElementById('deposit-modal');
-  const depositAmount = document.getElementById('deposit-amount');
-  const depositAlert  = document.getElementById('deposit-alert');
-  const depositSubmit = document.getElementById('deposit-submit');
+  // ── M-Pesa STK Push Deposit Modal Logic ──
+  const depositModal       = document.getElementById('deposit-modal');
+  const depositPhone       = document.getElementById('deposit-phone');
+  const depositAmount      = document.getElementById('deposit-amount');
+  const depositAlert       = document.getElementById('deposit-alert');
+  const depositSubmit      = document.getElementById('deposit-submit');
+
+  const stepForm           = document.getElementById('deposit-step-form');
+  const stepWaiting        = document.getElementById('deposit-step-waiting');
+  const stepSuccess        = document.getElementById('deposit-step-success');
+
+  const stkTargetPhone     = document.getElementById('stk-target-phone');
+  const stkTargetAmt       = document.getElementById('stk-target-amt');
+  const stkLiveStatus      = document.getElementById('stk-live-status');
+  const stkErrorMsg        = document.getElementById('stk-error-msg');
+
+  function resetDepositModal() {
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    stepForm.classList.remove('hidden');
+    stepWaiting.classList.add('hidden');
+    stepSuccess.classList.add('hidden');
+    hideAlert(depositAlert);
+    hideAlert(stkErrorMsg);
+    setLoading(depositSubmit, false, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Send M-Pesa STK Push');
+  }
 
   document.getElementById('btn-deposit').addEventListener('click', () => {
-    depositAmount.value = ''; hideAlert(depositAlert);
+    resetDepositModal();
+    const user = Auth.getUser();
+    if (user && user.phone) {
+      depositPhone.value = user.phone;
+    }
+    depositAmount.value = '';
     document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
     depositModal.classList.remove('hidden');
   });
-  document.getElementById('deposit-close').addEventListener('click', () => depositModal.classList.add('hidden'));
-  depositModal.addEventListener('click', e => { if (e.target === depositModal) depositModal.classList.add('hidden'); });
+
+  document.getElementById('deposit-close').addEventListener('click', () => {
+    resetDepositModal();
+    depositModal.classList.add('hidden');
+  });
+  document.getElementById('waiting-close').addEventListener('click', () => {
+    resetDepositModal();
+    depositModal.classList.add('hidden');
+  });
+  document.getElementById('btn-cancel-stk').addEventListener('click', () => {
+    resetDepositModal();
+    depositModal.classList.add('hidden');
+  });
+  document.getElementById('succ-done-btn').addEventListener('click', () => {
+    resetDepositModal();
+    depositModal.classList.add('hidden');
+  });
 
   document.getElementById('quick-amounts').addEventListener('click', e => {
     if (!e.target.matches('.quick-btn')) return;
@@ -318,18 +467,70 @@
 
   depositSubmit.addEventListener('click', async () => {
     const amount = parseFloat(depositAmount.value);
-    if (!amount || amount <= 0) { showAlert(depositAlert, 'Enter a valid amount.'); return; }
+    const phone  = depositPhone.value.trim();
+
+    if (!amount || amount <= 0) {
+      showAlert(depositAlert, 'Please enter a valid positive deposit amount.');
+      return;
+    }
+    if (phone && phone.length < 9) {
+      showAlert(depositAlert, 'Please enter a valid Kenyan phone number.');
+      return;
+    }
+
     hideAlert(depositAlert);
-    setLoading(depositSubmit, true);
+    setLoading(depositSubmit, true, 'Sending STK Push…');
+
     try {
-      await api.post('/api/wallet/deposit', { amount });
-      depositModal.classList.add('hidden');
-      await loadDashboard();
+      const res = await api.post('/api/wallet/deposit', { amount, phone });
+      
+      // Transition to Waiting Screen
+      stepForm.classList.add('hidden');
+      stepWaiting.classList.remove('hidden');
+
+      stkTargetPhone.textContent = res.phone || phone || 'Registered Phone';
+      stkTargetAmt.textContent   = 'KES ' + fmt(amount);
+
+      const checkoutId = res.checkoutRequestId;
+
+      // Start Polling for Status
+      let attempts = 0;
+      pollInterval = setInterval(async () => {
+        attempts++;
+        if (attempts > 50) { // ~75 seconds timeout
+          clearInterval(pollInterval);
+          showAlert(stkErrorMsg, 'M-Pesa request timed out. If you entered your PIN, your balance will reflect shortly.');
+          return;
+        }
+
+        try {
+          const statusRes = await api.get(`/api/wallet/deposit-status/${checkoutId}`);
+          if (statusRes.status === 'COMPLETED') {
+            clearInterval(pollInterval);
+            stepWaiting.classList.add('hidden');
+            stepSuccess.classList.remove('hidden');
+
+            document.getElementById('succ-amount').textContent  = 'KES ' + fmt(statusRes.amount || amount);
+            document.getElementById('succ-receipt').textContent = statusRes.receipt || 'Confirmed';
+            document.getElementById('succ-balance').textContent = 'KES ' + fmt(statusRes.walletBalance);
+
+            await loadDashboard();
+          } else if (statusRes.status === 'FAILED') {
+            clearInterval(pollInterval);
+            showAlert(stkErrorMsg, statusRes.resultDesc || 'M-Pesa payment was cancelled or failed.');
+          }
+        } catch (e) {
+          console.warn('Status poll error:', e);
+        }
+      }, 1500);
+
     } catch (err) {
-      showAlert(depositAlert, err.message);
-      setLoading(depositSubmit, false, 'Confirm Deposit');
+      const errorMsg = (err.data && err.data.error) || (err.message === 'Failed to fetch' ? 'Unable to connect to the server. Please ensure the server is running.' : err.message) || 'Failed to initiate M-Pesa STK Push.';
+      showAlert(depositAlert, errorMsg);
+      setLoading(depositSubmit, false, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Send M-Pesa STK Push');
     }
   });
+
 
   // ── Withdraw Modal ────────────────────────
   const withdrawModal  = document.getElementById('withdraw-modal');

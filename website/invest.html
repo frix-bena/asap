@@ -113,11 +113,11 @@
           </div>
           <div class="plan-stat">
             <span class="plan-stat-label">Min / Max</span>
-            <span class="plan-stat-value">$${fmt(plan.minAmount, 0)} – $${fmt(plan.maxAmount, 0)}</span>
+            <span class="plan-stat-value">KES ${fmt(plan.minAmount, 0)} – KES ${fmt(plan.maxAmount, 0)}</span>
           </div>
         </div>
         <div class="plan-commit">
-          <input type="number" class="input commit-amount" placeholder="Enter amount (USD)"
+          <input type="number" class="input commit-amount" placeholder="Enter amount (KES)"
             min="${plan.minAmount}" max="${plan.maxAmount}" step="any" style="margin-bottom:.75rem" />
           <button class="btn btn-primary btn-full commit-btn" data-plan="${plan.id}">Commit Funds</button>
         </div>
@@ -148,7 +148,7 @@
         setLoading(btn, true);
         try {
           await api.post('/api/invest/commit', { planId, amount });
-          showAlert(alert, `✅ Successfully committed $${fmt(amount)} to the ${plans.find(p=>p.id===planId)?.name} plan!`, 'success');
+          showAlert(alert, `✅ Successfully committed KES ${fmt(amount)} to the ${plans.find(p=>p.id===planId)?.name} plan!`, 'success');
           selectedPlanId = null;
           renderPlans();
         } catch (err) {

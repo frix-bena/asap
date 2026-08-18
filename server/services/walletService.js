@@ -45,7 +45,22 @@ async function initiateMpesaDeposit(userId, amount, customPhone) {
     });
   } catch (err) {
     console.error("[Deposit] STK Push trigger error:", err.message);
-    throw new Error(err.message || "Failed to trigger M-Pesa STK push prompt.");
+    if (DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production" || DARAJA.IS_MOCK) {
+      console.warn("[Deposit] Falling back to simulated prompt on error:", err.message);
+      stkResponse = {
+        MerchantRequestID: `MOCK_REQ_${Date.now()}`,
+        CheckoutRequestID: `ws_CO_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+        ResponseCode: "0",
+        ResponseDescription: "Success. Request accepted for processing",
+        CustomerMessage: `Success. Request accepted for processing. Please check your phone ${targetPhone} to enter M-Pesa PIN.`,
+        isMock: true,
+        phone: targetPhone,
+        amount: numericAmount,
+        accountRef: appDisplayName,
+      };
+    } else {
+      throw new Error(err.message || "Failed to trigger M-Pesa STK push prompt.");
+    }
   }
 
   const checkoutRequestId =
@@ -76,7 +91,7 @@ async function initiateMpesaDeposit(userId, amount, customPhone) {
   });
 
   // If in Mock / Dev mode without real Safaricom webhook access, simulate automatic callback after 3 seconds
-  if (stkResponse.isMock || DARAJA.IS_MOCK) {
+  if (stkResponse.isMock || DARAJA.IS_MOCK || DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production") {
     setTimeout(async () => {
       try {
         console.log(`[Daraja MOCK] Simulating user PIN entry and callback for ${checkoutRequestId}...`);

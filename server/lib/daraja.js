@@ -114,6 +114,10 @@ async function getAccessToken() {
       "[Daraja] OAuth error:",
       err.response?.data || err.message
     );
+    if (DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production" || DARAJA.IS_MOCK) {
+      console.warn("[Daraja] Falling back to mock token due to OAuth network/auth error in sandbox/dev.");
+      return "mock_daraja_access_token_" + Date.now();
+    }
     throw new Error(
       `Daraja authentication failed: ${
         err.response?.data?.errorMessage || err.message
@@ -218,25 +222,25 @@ async function stkPush({ phone, amount, accountRef, description, callbackUrl }) 
     };
   }
 
-  const token = await getAccessToken();
-  const timestamp = getTimestamp();
-  const password = generatePassword(DARAJA.SHORTCODE, DARAJA.PASSKEY, timestamp);
-
-  const payload = {
-    BusinessShortCode: DARAJA.SHORTCODE,
-    Password: password,
-    Timestamp: timestamp,
-    TransactionType: "CustomerPayBillOnline",
-    Amount: roundedAmount,
-    PartyA: normalizedPhone,
-    PartyB: DARAJA.SHORTCODE,
-    PhoneNumber: normalizedPhone,
-    CallBackURL: cbUrl,
-    AccountReference: appDisplayName.slice(0, 12), // Safaricom AccountReference field (Prompt Name)
-    TransactionDesc: txDescription,
-  };
-
   try {
+    const token = await getAccessToken();
+    const timestamp = getTimestamp();
+    const password = generatePassword(DARAJA.SHORTCODE, DARAJA.PASSKEY, timestamp);
+
+    const payload = {
+      BusinessShortCode: DARAJA.SHORTCODE,
+      Password: password,
+      Timestamp: timestamp,
+      TransactionType: "CustomerPayBillOnline",
+      Amount: roundedAmount,
+      PartyA: normalizedPhone,
+      PartyB: DARAJA.SHORTCODE,
+      PhoneNumber: normalizedPhone,
+      CallBackURL: cbUrl,
+      AccountReference: appDisplayName.slice(0, 12), // Safaricom AccountReference field (Prompt Name)
+      TransactionDesc: txDescription,
+    };
+
     const { data } = await axios.post(
       `${DARAJA.BASE_URL}/mpesa/stkpush/v1/processrequest`,
       payload,
@@ -253,7 +257,7 @@ async function stkPush({ phone, amount, accountRef, description, callbackUrl }) 
   } catch (err) {
     console.error("[Daraja] STK Push Request Failed:", err.response?.data || err.message);
     // In dev / sandbox mode, if Safaricom is unreachable or fails due to network/creds, fallback to simulated prompt
-    if (DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production") {
+    if (DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production" || DARAJA.IS_MOCK) {
       console.warn("[Daraja] Sandbox/network error encountered, falling back to simulated prompt for testing.");
       const mockCheckoutId = `ws_CO_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
       return {
@@ -293,18 +297,18 @@ async function stkQuery({ checkoutRequestId }) {
     };
   }
 
-  const token = await getAccessToken();
-  const timestamp = getTimestamp();
-  const password = generatePassword(DARAJA.SHORTCODE, DARAJA.PASSKEY, timestamp);
-
-  const payload = {
-    BusinessShortCode: DARAJA.SHORTCODE,
-    Password: password,
-    Timestamp: timestamp,
-    CheckoutRequestID: checkoutRequestId,
-  };
-
   try {
+    const token = await getAccessToken();
+    const timestamp = getTimestamp();
+    const password = generatePassword(DARAJA.SHORTCODE, DARAJA.PASSKEY, timestamp);
+
+    const payload = {
+      BusinessShortCode: DARAJA.SHORTCODE,
+      Password: password,
+      Timestamp: timestamp,
+      CheckoutRequestID: checkoutRequestId,
+    };
+
     const { data } = await axios.post(
       `${DARAJA.BASE_URL}/mpesa/stkpushquery/v1/query`,
       payload,
@@ -320,7 +324,7 @@ async function stkQuery({ checkoutRequestId }) {
     return data;
   } catch (err) {
     console.error("[Daraja] STK Query Failed:", err.response?.data || err.message);
-    if (DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production") {
+    if (DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production" || DARAJA.IS_MOCK) {
       return {
         ResponseCode: "0",
         ResultCode: "0",

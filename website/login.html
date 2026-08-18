@@ -21,8 +21,8 @@
 
       <form id="login-form">
         <div class="form-group">
-          <label class="form-label" for="phone number">Phone Number</label>
-          <input id="phone number" type="number" class="input" placeholder="254700000000" autocomplete="phone number" />
+          <label class="form-label" for="phone">Phone Number</label>
+          <input id="phone" type="tel" class="input" placeholder="254700000000" autocomplete="tel" />
         </div>
         <div class="form-group">
           <label class="form-label" for="password">Password</label>
@@ -52,7 +52,7 @@
       hideAlert(alertEl);
       setLoading(submitBtn, true);
 
-      const phone = document.getElementById('phone number').value.trim();
+      const phone = document.getElementById('phone').value.trim();
       const password = document.getElementById('password').value;
 
       try {

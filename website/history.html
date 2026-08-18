@@ -137,7 +137,7 @@
       return `
         <tr>
           <td><span class="badge ${cfg.badge}">${cfg.label}</span></td>
-          <td class="right" style="color:${cfg.color};font-weight:600">${cfg.sign}$${fmt(tx.amount)}</td>
+          <td class="right" style="color:${cfg.color};font-weight:600">${cfg.sign}KES ${fmt(tx.amount)}</td>
           <td class="center">
             <span class="badge ${tx.status === 'COMPLETED' ? 'badge-green' : 'badge-amber'}">
               ${tx.status}

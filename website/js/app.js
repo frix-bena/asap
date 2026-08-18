@@ -1,5 +1,11 @@
-// ── Config ──────────────────────────────────────────────
-const API_BASE = 'http://127.0.0.1:5000'; // Explicit IPv4 — avoids localhost IPv6 resolution issues
+const API_BASE = (() => {
+  if (typeof window !== 'undefined') {
+    if (window.location.port === '5000') return window.location.origin;
+    const hostname = window.location.hostname || '127.0.0.1';
+    if (hostname && hostname !== '') return `http://${hostname}:5000`;
+  }
+  return 'http://127.0.0.1:5000';
+})();
 
 // ── Auth Helpers ─────────────────────────────────────────
 const Auth = {
@@ -15,11 +21,11 @@ const Auth = {
   },
   isLoggedIn: () => !!localStorage.getItem('iv_token'),
   requireAuth() {
-    if (!this.isLoggedIn()) { window.location.href = '/website/login.html'; return false; }
+    if (!this.isLoggedIn()) { window.location.href = 'login.html'; return false; }
     return true;
   },
   requireGuest() {
-    if (this.isLoggedIn()) { window.location.href = '/website/dashboard.html'; }
+    if (this.isLoggedIn()) { window.location.href = 'dashboard.html'; }
   },
 };
 
@@ -37,7 +43,8 @@ const api = {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      if (res.status === 401) { Auth.clear(); window.location.href = '/website/login.html'; }
+      const isAuthRoute = path.includes('/login') || path.includes('/register');
+      if (res.status === 401 && !isAuthRoute) { Auth.clear(); window.location.href = 'login.html'; }
       throw Object.assign(new Error(data.error || 'Request failed'), { data });
     }
     return data;
@@ -88,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       Auth.clear();
-      window.location.href = '/website/login.html';
+      window.location.href = 'login.html';
     });
   }
 });
