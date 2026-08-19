@@ -79,6 +79,9 @@ export default function DepositModal({
     return () => clearInterval(interval);
   }, [step, checkoutId, qc, onSuccess]);
 
+  const [isMockMode, setIsMockMode] = useState(false);
+  const [confirmingDev, setConfirmingDev] = useState(false);
+
   const handleInitiateSTK = async () => {
     const num = parseFloat(amount);
     if (!num || num <= 0) {
@@ -97,45 +100,32 @@ export default function DepositModal({
 
       if (res.data?.checkoutRequestId) {
         setCheckoutId(res.data.checkoutRequestId);
+        setIsMockMode(Boolean(res.data.isMock));
         setStep("WAITING_PIN");
       } else {
-        // Direct deposit response
-        qc.invalidateQueries({ queryKey: ["wallet"] });
-        qc.invalidateQueries({ queryKey: ["wallet-history"] });
-        onSuccess();
-        onClose();
+        throw new Error(res.data?.message || "Failed to initiate M-Pesa STK push.");
       }
     } catch (err: any) {
-      // If STK request fails, attempt direct deposit fallback
-      try {
-        const directRes = await api.post("/api/wallet/deposit", {
-          amount: num,
-          direct: true,
-        });
-        if (directRes.data?.wallet) {
-          qc.invalidateQueries({ queryKey: ["wallet"] });
-          qc.invalidateQueries({ queryKey: ["wallet-history"] });
-          setConfirmedData({
-            amount: num,
-            receipt: directRes.data.transaction?.reference || "Confirmed",
-            walletBalance: directRes.data.wallet.balance,
-          });
-          setStep("SUCCESS");
-          onSuccess();
-          return;
-        }
-      } catch (fallbackErr) {
-        // Continue to error reporting below
-      }
-
       const errorMsg =
         err.response?.data?.message ||
         err.response?.data?.error ||
         err.message ||
-        "Deposit request failed. Please try again.";
+        "Deposit request failed. Please check your phone number and try again.";
       setError(errorMsg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleManualDevConfirm = async () => {
+    if (!checkoutId) return;
+    setConfirmingDev(true);
+    try {
+      await api.post(`/api/wallet/mock-confirm/${checkoutId}`);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Mock confirmation failed.");
+    } finally {
+      setConfirmingDev(false);
     }
   };
 
@@ -285,6 +275,23 @@ export default function DepositModal({
               <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
                 {error}
               </div>
+            )}
+
+            {isMockMode && (
+              <button
+                disabled={confirmingDev}
+                onClick={handleManualDevConfirm}
+                className="w-full mb-3 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/25 text-amber-300 text-xs font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              >
+                {confirmingDev ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Verifying PIN...</span>
+                  </>
+                ) : (
+                  <span>Simulate PIN Entry (Dev Only)</span>
+                )}
+              </button>
             )}
 
             <button

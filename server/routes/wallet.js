@@ -39,8 +39,8 @@ router.get("/", async (req, res) => {
 });
 
 // POST /api/wallet/deposit
-// Body: { amount: number, phone?: string, phoneNumber?: string, direct?: boolean }
-// If direct === true, executes direct wallet credit; otherwise fires M-Pesa STK Push prompt to user's phone.
+// Body: { amount: number, phone?: string, phoneNumber?: string }
+// Initiates Daraja M-Pesa STK Push prompt to user's phone for PIN entry.
 router.post("/deposit", async (req, res) => {
   const amount = parseFloat(req.body.amount);
   if (isNaN(amount) || amount <= 0) {
@@ -51,22 +51,7 @@ router.post("/deposit", async (req, res) => {
     });
   }
 
-  // If user explicitly asks for direct top-up / simulation
-  if (req.body.direct === true) {
-    try {
-      const result = await deposit(req.user.sub, amount);
-      return res.json({ success: true, ...result });
-    } catch (err) {
-      console.error("[Wallet Deposit Direct] Error:", err.message);
-      return res.status(400).json({
-        success: false,
-        error: err.message,
-        message: err.message,
-      });
-    }
-  }
-
-  // Default: Initiate real Daraja STK Push prompt to the user's phone
+  // Initiate real Daraja STK Push prompt to the user's phone
   try {
     const rawPhone = req.body.phoneNumber || req.body.phone;
     const formattedPhone = rawPhone ? formatPhoneNumber(rawPhone) : undefined;

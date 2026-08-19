@@ -217,6 +217,10 @@
 
         <div id="stk-error-msg" class="alert alert-error" style="margin-top:.75rem"></div>
 
+        <button class="btn btn-amber btn-full btn-sm hidden" id="btn-dev-confirm-stk" style="margin-top:.5rem">
+          Simulate PIN Entry (Dev Only)
+        </button>
+
         <button class="btn btn-secondary btn-full btn-sm" id="btn-cancel-stk" style="margin-top:.5rem">
           Close Window
         </button>
@@ -349,16 +353,33 @@
   const stkTargetPhone     = document.getElementById('stk-target-phone');
   const stkTargetAmt       = document.getElementById('stk-target-amt');
   const stkLiveStatus      = document.getElementById('stk-live-status');
-  const stkErrorMsg        = document.getElementById('stk-error-msg');
+  const btnDevConfirmSTK   = document.getElementById('btn-dev-confirm-stk');
+  let currentCheckoutId    = null;
 
   function resetDepositModal() {
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    currentCheckoutId = null;
     stepForm.classList.remove('hidden');
     stepWaiting.classList.add('hidden');
     stepSuccess.classList.add('hidden');
+    if (btnDevConfirmSTK) btnDevConfirmSTK.classList.add('hidden');
     hideAlert(depositAlert);
     hideAlert(stkErrorMsg);
     setLoading(depositSubmit, false, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Send M-Pesa STK Push');
+  }
+
+  if (btnDevConfirmSTK) {
+    btnDevConfirmSTK.addEventListener('click', async () => {
+      if (!currentCheckoutId) return;
+      setLoading(btnDevConfirmSTK, true, 'Verifying…');
+      try {
+        await api.post(`/api/wallet/mock-confirm/${currentCheckoutId}`);
+      } catch (err) {
+        showAlert(stkErrorMsg, err.message || 'Mock confirm failed');
+      } finally {
+        setLoading(btnDevConfirmSTK, false, 'Simulate PIN Entry (Dev Only)');
+      }
+    });
   }
 
   document.getElementById('btn-deposit').addEventListener('click', () => {
@@ -421,9 +442,11 @@
       stepWaiting.classList.remove('hidden');
 
       stkTargetPhone.textContent = res.phone || phone || 'Registered Phone';
-      stkTargetAmt.textContent   = 'KES ' + fmt(amount);
-
+      currentCheckoutId = res.checkoutRequestId;
       const checkoutId = res.checkoutRequestId;
+      if (res.isMock && btnDevConfirmSTK) {
+        btnDevConfirmSTK.classList.remove('hidden');
+      }
 
       // Start Polling for Status
       let attempts = 0;

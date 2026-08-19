@@ -99,36 +99,8 @@ async function initiateMpesaDeposit(userId, amount, customPhone) {
     },
   });
 
-  // If in Mock / Dev mode without real Safaricom webhook access, simulate automatic callback after 3 seconds
-  if (stkResponse.isMock || DARAJA.IS_MOCK || DARAJA.ENV === "sandbox" || process.env.NODE_ENV !== "production") {
-    setTimeout(async () => {
-      try {
-        console.log(`[Daraja MOCK] Simulating user PIN entry and callback for ${checkoutRequestId}...`);
-        await handleMpesaCallback({
-          Body: {
-            stkCallback: {
-              MerchantRequestID: merchantRequestId,
-              CheckoutRequestID: checkoutRequestId,
-              ResultCode: 0,
-              ResultDesc: "The service request is processed successfully.",
-              CallbackMetadata: {
-                Item: [
-                  { Name: "Amount", Value: numericAmount },
-                  { Name: "MpesaReceiptNumber", Value: "QHX" + Math.random().toString(36).substring(2, 9).toUpperCase() },
-                  { Name: "TransactionDate", Value: Number(new Date().toISOString().replace(/\D/g, "").slice(0, 14)) },
-                  { Name: "PhoneNumber", Value: Number(targetPhone) },
-                ],
-              },
-            },
-          },
-        });
-        console.log(`[Daraja MOCK] Deposit confirmed for ${checkoutRequestId}`);
-      } catch (mockErr) {
-        console.error("[Daraja MOCK] Error processing mock callback:", mockErr.message);
-      }
-    }, 3000);
-  }
-
+  // Deposit remains in PENDING status until the user enters their M-Pesa PIN on their device
+  // and Safaricom sends the webhook callback to handleMpesaCallback, or explicit mock-confirm is called.
   return {
     success: true,
     message: `M-Pesa STK push sent to ${targetPhone}. Please check your phone and enter your PIN to confirm payment to ${appDisplayName}.`,
@@ -139,6 +111,7 @@ async function initiateMpesaDeposit(userId, amount, customPhone) {
     appName: appDisplayName,
     customerMessage: stkResponse.CustomerMessage,
     transactionId: pendingTx.id,
+    isMock: stkResponse.isMock || false,
   };
 }
 

@@ -163,6 +163,9 @@ function InvestmentModal({
     }
   };
 
+  const [isMockMode, setIsMockMode] = useState(false);
+  const [confirmingDev, setConfirmingDev] = useState(false);
+
   // Handle M-Pesa STK Push direct prompt to phone
   const handleMpesaSTK = async () => {
     setLoading(true);
@@ -175,40 +178,32 @@ function InvestmentModal({
 
       if (res.data?.checkoutRequestId) {
         setCheckoutId(res.data.checkoutRequestId);
+        setIsMockMode(Boolean(res.data.isMock));
         setStep("WAITING_PIN");
       } else {
-        // Direct / mock fallback
-        const actRes = await api.post("/api/invest/activate", { planId: pkg.id });
-        qc.invalidateQueries({ queryKey: ["wallet"] });
-        qc.invalidateQueries({ queryKey: ["active-investments"] });
-        onActivated(actRes.data?.message || `${pkg.name} package activated successfully!`);
-        onClose();
+        throw new Error(res.data?.message || "Failed to trigger M-Pesa prompt.");
       }
     } catch (err: any) {
-      // If STK fails, attempt direct deposit and activation fallback
-      try {
-        await api.post("/api/wallet/deposit", {
-          amount: pkg.price,
-          direct: true,
-        });
-        const actRes = await api.post("/api/invest/activate", { planId: pkg.id });
-        qc.invalidateQueries({ queryKey: ["wallet"] });
-        qc.invalidateQueries({ queryKey: ["active-investments"] });
-        qc.invalidateQueries({ queryKey: ["wallet-history"] });
-        onActivated(actRes.data?.message || `${pkg.name} package activated successfully!`);
-        onClose();
-        return;
-      } catch (fallbackErr) {
-        // Fallthrough
-      }
-
       const errorMsg =
+        err.response?.data?.message ||
         err.response?.data?.error ||
         err.message ||
-        "Failed to trigger M-Pesa prompt. Please try again.";
+        "Failed to trigger M-Pesa prompt. Please check your phone number and try again.";
       setError(errorMsg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleManualDevConfirm = async () => {
+    if (!checkoutId) return;
+    setConfirmingDev(true);
+    try {
+      await api.post(`/api/wallet/mock-confirm/${checkoutId}`);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Mock confirmation failed.");
+    } finally {
+      setConfirmingDev(false);
     }
   };
 
@@ -443,6 +438,23 @@ function InvestmentModal({
               <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
                 {error}
               </div>
+            )}
+
+            {isMockMode && (
+              <button
+                disabled={confirmingDev}
+                onClick={handleManualDevConfirm}
+                className="w-full mb-3 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/25 text-amber-300 text-xs font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              >
+                {confirmingDev ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Verifying PIN...</span>
+                  </>
+                ) : (
+                  <span>Simulate PIN Entry (Dev Only)</span>
+                )}
+              </button>
             )}
 
             <button
